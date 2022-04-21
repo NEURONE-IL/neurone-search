@@ -1,3 +1,6 @@
+# downloaded pages in assets
+assets/downloadedDocs/
+
 # Logs
 logs
 *.log

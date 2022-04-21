@@ -16,6 +16,7 @@ import readdir from 'readdir-enhanced';
 import scrape from 'website-scraper'; // TODO: Check if 5.0.0 can be made compatible with commonjs https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
 
 import { IndexDocument } from './indexDocInterface'
+import mongoose from 'mongoose';
 
 const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36';
 const errorObj = { msg: 'ERROR!' };
@@ -34,14 +35,6 @@ function getImg(stats: { isFile: () => any; size: number; path: string | string[
 }
 
 export class DocumentDownloader {
-
-  constructor(){
-  }
-
-  testConsoleLog(): void {
-    console.log("CLASS WORKS!");
-    return;
-  }
 
   static createDownloadDirs() {
     try {
@@ -94,8 +87,10 @@ export class DocumentDownloader {
 
     fs.remove(downloadPath, (err) => {
       if (!err) {
+        console.log("BEGIN SCRAPE")
         scrape(options, (err2, res2) => {
           if (!err2) {
+            console.log("SCRAPTE COMPLETE, ENTERING CALLBACK");
             const response = {
               docName: docName,
               pageUrl: res2 ? res2[0].url : '', // Carlos: added null ckeck
@@ -123,8 +118,9 @@ export class DocumentDownloader {
   // dgacitua: Download and index downloaded document
   
   static index(docObj: IndexDocument, callback: any) {
-    const indexedDocument: IndexDocument = { docName: docObj.docName,
-      _id: '',
+    const indexedDocument: IndexDocument = { 
+      docName: docObj.docName,
+      
       title: docObj.title || 'New NEURONE Page',
       locale: docObj.locale || 'en',
       relevant: docObj.relevant || false,
@@ -158,8 +154,9 @@ export class DocumentDownloader {
           }
         }
         */
-
+        console.log("RUNNING findOneAndUpdate");
         const result = await DocumentsModel.findOneAndUpdate({ route: indexedDocument.route }, indexedDocument, { new: true, upsert: true });
+        console.log("SUCCESSFUL");
 
         // Carlos: original result, new uses mongoose
         //const result = Documents.upsert({ route: indexedDocument.route }, indexedDocument);
@@ -203,7 +200,7 @@ export class DocumentDownloader {
         })
 
         // TODO: check if numbreaffected works
-        if (result.numberAffected > 0) {} // <- TODO: delete closing brace
+        if (result.numberAffected > 0) { console.log("todo: delete this log ")} // <- TODO: delete closing brace when uncommenting
           // Carlos: original
           //const doc = Documents.findOne({ route: indexedDocument.route });
           const doc = DocumentsModel.findOne({ route: indexedDocument.route });
@@ -228,6 +225,7 @@ export class DocumentDownloader {
       }
     }));
   }
+
   static fetch(docObj: IndexDocument, callback: any) {
     console.log('Attempting to download document!');
 
@@ -257,7 +255,7 @@ export class DocumentDownloader {
       console.log('Document URL', docObj.url);
 
       const document: IndexDocument = {
-        _id: '<preview>',
+        //_id: '<preview>',
         docName: docObj.docName,
         title: docObj.title || 'New NEURONE Page',
         locale: docObj.locale || 'en',

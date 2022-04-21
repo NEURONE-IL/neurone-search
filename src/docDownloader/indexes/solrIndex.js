@@ -31,7 +31,8 @@ export default class SolrIndex {
   }
 
   static generate(callback) {
-    SolrIndex.load(Meteor.bindEnvironment((err, res) => {
+    // Carlos: removed Meteor "bind environment" method
+    SolrIndex.load((err, res) => {
       if (!err) {
         let docs = Documents.find().fetch(),
          idxDocs = [],
@@ -86,7 +87,7 @@ export default class SolrIndex {
       else {
         callback(err);
       }
-    }));
+    });
   }
 
   static index(docObj, callback) {
@@ -118,7 +119,8 @@ export default class SolrIndex {
   }
 
   static searchDocuments(queryObject, callback) {
-    check(queryObject, Object);
+    // meteor function, this throws an error when the value doesn't match the pattern [check(value, pattern)], TODO: replace or remove
+    // check(queryObject, Object);
 
     let queryString = queryObject.query,
         queryLocale = queryObject.locale ? queryObject.locale : null,
@@ -138,8 +140,8 @@ export default class SolrIndex {
     //console.log('SearchQuery', query);
 
     let respDocs = [];
-
-    searchIndex.search(encodeURI(query), Meteor.bindEnvironment((err, res) => {
+    // Carlos: removed meteor "bindEnvironment" method
+    searchIndex.search(encodeURI(query), (err, res) => {
       if (!err) {
         let searchResponse = res,
                  searchNum = searchResponse.response.numFound,
@@ -178,6 +180,6 @@ export default class SolrIndex {
         console.error(err);
         callback(err);
       }
-    }));
+    });
   }
 }

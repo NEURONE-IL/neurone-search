@@ -1,18 +1,22 @@
-// SIGUIENTE INTENTO: COPIAR CONFIGS DE OTROS PROYECTOS BACKEND Y HACER PRUEBAS DE A POQUITO
-
-
-
-
-
-
-
-
 import 'dotenv/config'
 import express from 'express';
 import mongoose from 'mongoose'; 
 import { IndexDocument } from './docDownloader/indexDocInterface';
 import { DocumentDownloader } from './docDownloader/documentDownloader';
 
+const app = express();
+const port = process.env.PORT || 3001;
+app.use(express.urlencoded({extended: true})); // Parse URL-encoded bodies
+app.use(express.json()); // TODO: add form data support
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS" )
+    next();
+});
+
+import download from './routes/download';
+app.use(download);
 
 /*
 // Load dependency
@@ -55,11 +59,12 @@ mongoose.connection.on('error', err => {
 
 connectToDB(); 
 
-
+/*
+example of use in api
 const obj2: IndexDocument = {
   docName: 'wiki-en', 
   url: 'https://en.wikipedia.org/',
-  _id: '',
+  //_id: '1234',
   title: '',
   locale: '',
   task: [],
@@ -73,17 +78,13 @@ const obj2: IndexDocument = {
   hash: ''
 };
 
+DocumentDownloader.fetch(obj2, (err: unknown, res: any) => { if(!err) console.log('ok2'); else {console.error("ERROR: \n" + err)} });
+*/
 
-// DocumentDownloader.fetch(obj2, (err: unknown, res: any) => { if(!err) console.log('ok2') });
-
-const cosa = new DocumentDownloader();
-cosa.testConsoleLog();
-
-const app = express();
-const port = process.env.PORT || 3001;
 app.get('/', (req, res) => {
     res.send(`This is the neurone-search backend on port ${port}!`);
 });
 app.listen(port, () => {
   return console.log(`server is listening on ${port}`);
 });
+

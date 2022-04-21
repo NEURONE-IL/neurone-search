@@ -327,7 +327,7 @@ export default class DocumentParser {
 
   static getDocumentInfo(documentPath: string) {
     const obj: IndexDocument = {
-      _id: '',
+      //_id: '',
       title: this.getHtmlTitle(documentPath),
       indexedBody: this.getHtmlAsText(documentPath),
       date: (new Date()).toString(), // Carlos: changed to be used from here and not serverUtils
