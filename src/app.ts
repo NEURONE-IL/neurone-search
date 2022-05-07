@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express';
-import mongoose from 'mongoose'; 
+import mongoose from 'mongoose';
+
 import { IndexDocument } from './docDownloader/indexDocInterface';
 import { DocumentDownloader } from './docDownloader/documentDownloader';
 
@@ -16,6 +17,7 @@ app.use((req, res, next) => {
 });
 
 import download from './routes/download';
+import SolrIndex from './docDownloader/indexes/solrIndex';
 app.use(download);
 
 /*
@@ -88,3 +90,8 @@ app.listen(port, () => {
   return console.log(`server is listening on ${port}`);
 });
 
+
+
+
+// SOLR CLIENT TEST
+SolrIndex.generate();

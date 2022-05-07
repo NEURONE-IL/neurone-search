@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-//const uniqueValidator = require('mongoose-unique-validator');
+import uniqueValidator from 'mongoose-unique-validator';
 
 const documentSchema =  new mongoose.Schema({
 
-  docName: { type: String },
+  docName: { type: String, unique: true },
   title: { type: String },
   locale: { type: String },
   relevant: { type: String },
@@ -20,7 +20,7 @@ const documentSchema =  new mongoose.Schema({
 
 });
 
-//formSchema.plugin(uniqueValidator);
+documentSchema.plugin(uniqueValidator);
 
 export const DocumentsModel = mongoose.model('indexDocument', documentSchema);
 

@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 
 import DocumentParser from './documentParser';
-import Indexer from './indexer';
+//import Indexer from './indexer';
 
 import ServerConfigs from './utils/serverConfigs';
 import Utils from './utils/serverUtils';
@@ -90,7 +90,7 @@ export class DocumentDownloader {
         console.log("BEGIN SCRAPE")
         scrape(options, (err2, res2) => {
           if (!err2) {
-            console.log("SCRAPTE COMPLETE, ENTERING CALLBACK");
+            console.log("SCRAPE COMPLETE, ENTERING CALLBACK");
             const response = {
               docName: docName,
               pageUrl: res2 ? res2[0].url : '', // Carlos: added null ckeck
@@ -156,7 +156,7 @@ export class DocumentDownloader {
         */
         console.log("RUNNING findOneAndUpdate");
         const result = await DocumentsModel.findOneAndUpdate({ route: indexedDocument.route }, indexedDocument, { new: true, upsert: true });
-        console.log("SUCCESSFUL");
+        console.log("findOneAndUpdate SUCCESSFUL");
 
         // Carlos: original result, new uses mongoose
         //const result = Documents.upsert({ route: indexedDocument.route }, indexedDocument);
@@ -199,7 +199,7 @@ export class DocumentDownloader {
           })
         })
 
-        // TODO: check if numbreaffected works
+        // TODO: check if numberAffected works
         if (result.numberAffected > 0) { console.log("todo: delete this log ")} // <- TODO: delete closing brace when uncommenting
           // Carlos: original
           //const doc = Documents.findOne({ route: indexedDocument.route });

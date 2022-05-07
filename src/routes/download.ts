@@ -2,6 +2,7 @@ import express from 'express';
 import { DocumentDownloader } from '../docDownloader/documentDownloader';
 import { IndexDocument } from '../docDownloader/indexDocInterface';
 
+
 const router = express.Router();
 
 router.post('/download', (req, res) => {
@@ -27,15 +28,16 @@ router.post('/download', (req, res) => {
   DocumentDownloader.fetch( 
     indexedDocument, 
     (err: unknown, res: any) => { 
-      if(!err) 
-        console.log('ok2'); 
+      if(!err){      
+        console.log('ok2');
+      }
       else { 
         console.error("ERROR: \n");
         console.error(err);
       } 
     });
 
-  res.status(200).json({message: "funciona"});
+  res.status(200).json({message: "Successful"}); // TODO: react to the result of fetch in case of an error
 });
 
 export default router;
