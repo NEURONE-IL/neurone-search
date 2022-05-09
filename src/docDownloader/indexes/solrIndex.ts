@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const solr = require('solr-client');
 import { SolrClientParams, Client } from 'solr-client';
+import { SearchResponse } from 'solr-client/dist/lib/solr';
 import { JsonResponseData } from 'solr-client/dist/lib/types';
 import { DocumentsModel } from '../../models/document';
 import { IndexDocument } from '../indexDocInterface';
@@ -35,9 +36,12 @@ export default class SolrIndex {
     });
   }
 
-  // generates the solr index from scratch from the database after finishing calling load() as a callback
-  // used when starting up or refreshing the server's index
-  static generate() {
+  /**
+   * generates the solr index from scratch from the database after finishing calling load() as a callback,
+   * used when starting up or refreshing the server's index
+   * @param callback 
+   */
+  static generate(callback: () => void) {
     this.load( (res, err) => {
       console.log("Entering load()...");
       if (!err) {
@@ -57,14 +61,14 @@ export default class SolrIndex {
           */
           docs.forEach((doc) => {
             console.log(doc);
-            // TODO: replace with indexDocument interface
+            // TODO: replace with indexDocument interface or create new interface
             const newDoc = {
-              id: doc._id,
+              id: doc.docName,
               docId_s: doc._id,
               locale_s: doc.locale,
               relevant_b: doc.relevant || false,
               title_t: doc.title || '',
-              searchSnippet_t: doc.searchSnippet || '',
+              searchSnippet_t: doc.searchSnippet || [], // Carlos: changed '' to []
               indexedBody_t: doc.indexedBody || '',
               keywords_t: doc.keywords || [],
               task_s: doc.task || [],
@@ -107,12 +111,23 @@ export default class SolrIndex {
    * @param docObj the document to index
    * @param callback function to run once it's done
    */
-  static index(docObj:IndexDocument, callback: (err: boolean) => void) {
+  static index(doc:IndexDocument, callback: (err: boolean) => void) {
 
     // TODO: test this method
-    const newDoc: IndexDocument = {
-      ...docObj
-    }
+    const newDoc = {
+      id: doc.id,
+      docId_s: doc.id,
+      locale_s: doc.locale,
+      relevant_b: doc.relevant || false,
+      title_t: doc.title || '',
+      searchSnippet_t: doc.searchSnippet || [], // Carlos: changed '' to []
+      indexedBody_t: doc.indexedBody || '',
+      keywords_t: doc.keywords || [],
+      task_s: doc.task || [],
+      domain_s: doc.domain || [],
+      url_t: doc.url || '',
+      type_t: /*doc.type ||*/ 'page' // TODO: check or ask what it 'type'
+    };
 
     this.client.add([newDoc]).then(() => {
       console.log("Document indexed successfully");
@@ -122,6 +137,47 @@ export default class SolrIndex {
       console.error(err);
       callback(true);
     })
+  }
+
+  /**
+   * search using the parameters in the loaded solr index
+   * @param queryObject object with query info
+   * @returns response from solr
+   */
+  static searchDocuments(queryObject: {query: string, locale?: string, task?: string, domain?: string}): SearchResponse<unknown> | void {
+
+    const queryString = queryObject.query,
+          queryLocale = queryObject.locale ? queryObject.locale : null,
+          queryTask = queryObject.task ? queryObject.task : null,
+          queryDomain = queryObject.domain ? queryObject.domain : null;
+
+    // query string to be passed to solr
+    const q1 = `(title_t:${queryString} OR indexedBody_t: ${queryString} OR keywords_t: ${queryString})`,
+          q2 = queryLocale ? ` AND locale_s:${queryLocale}` : '',
+          q3 = queryTask ? ` AND task_s:${queryTask}` : '',
+          q4 = queryDomain ? ` AND domain_s:${queryDomain}` : '',
+          q5 = `start=0&rows=100`,
+          q6 = `df=indexedBody_t`,
+          q7 = `hl=on&hl.q=${queryString}&hl.fl=indexedBody_t&hl.snippets=3&hl.simple.pre=<em class="hl">&hl.simple.post=</em>`,
+          q8 = `hl.fragmenter=regex&hl.regex.slop=0.2&hl.alternateField=body_t&hl.maxAlternateFieldLength=300`,
+       query = `(${q1}${q2}${q3}${q4})&${q5}&${q6}&${q7}&${q8}`;
+
+    // query to solr
+    const queryObj = this.client.query().q(query);
+    this.client.search(queryObj).then((res: SearchResponse<unknown>) => {
+      console.log("queryObject:", res);
+      console.log(res.response.docs);
+      return res;
+    }).catch( (err: Error) => {
+      console.error(err);
+      return {};
+    });
+    
+    /* // test to get all docs
+    this.client.searchAll().then((res:any) => {
+      console.log(res);
+      console.log(res.response.docs)
+    })*/
   }
 
 }

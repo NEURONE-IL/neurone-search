@@ -27,6 +27,7 @@ export default class DocumentParser {
         ignoreImage: true
       };
 
+      // TODO: fix deprecated method
       const extractedText = htmlToText.fromString(htmlFile, options) || '';
       return this.escapeString(extractedText);
     }

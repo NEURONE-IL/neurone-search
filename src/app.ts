@@ -94,4 +94,5 @@ app.listen(port, () => {
 
 
 // SOLR CLIENT TEST
-SolrIndex.generate();
+SolrIndex.generate(() => {console.log("filler pls ignore")});
+SolrIndex.searchDocuments({query: 'value'});
