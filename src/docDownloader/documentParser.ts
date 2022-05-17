@@ -1,13 +1,12 @@
-// Carlos: originally a JS file, updated to be TS
-
+// Carlos: ported to TS
 import fs from 'fs';
 import { URL } from 'url'; // Carlos: updated to use the WHATWG API
 import path from 'path';
 import iconv from 'iconv';
 import charset from 'charset';
 import sha from 'sha';
-import cheerio from 'cheerio';
-import htmlToText from 'html-to-text';
+import { load } from 'cheerio';
+import { htmlToText } from 'html-to-text';
 import { pascalCase } from 'change-case'; // Carlos: replacing the older package 'uppercamelcase'
 import { IndexDocument } from './indexDocInterface';
 
@@ -27,8 +26,7 @@ export default class DocumentParser {
         ignoreImage: true
       };
 
-      // TODO: fix deprecated method
-      const extractedText = htmlToText.fromString(htmlFile, options) || '';
+      const extractedText = htmlToText(htmlFile, options) || '';
       return this.escapeString(extractedText);
     }
     catch (e) {
@@ -42,7 +40,7 @@ export default class DocumentParser {
       const relPath = documentPath,
          htmlFile = this.readFile(relPath),
        htmlString = htmlFile.toString(),
-                $ = cheerio.load(htmlString),
+                $ = load(htmlString),
             title = $('head > title').text() || $('title').text() || $('h1').first().text() || 'Untitled Document';
 
       //console.log(relPath, title);
@@ -105,7 +103,7 @@ export default class DocumentParser {
 
       const htmlFile = this.readFile(relPath),
         htmlString = htmlFile.toString(),
-                 $ = cheerio.load(htmlFile);
+                 $ = load(htmlFile);
 
       const parseClass = (classValue: string) => { return classValue.split(' ') };
       

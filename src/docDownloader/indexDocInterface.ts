@@ -1,5 +1,5 @@
 export interface IndexDocument {
-  id?: string,
+  _id?: string,
   docName: string,
   title: string,
   locale: string,

@@ -2,7 +2,6 @@
 const solr = require('solr-client');
 import { SolrClientParams, Client } from 'solr-client';
 import { SearchResponse } from 'solr-client/dist/lib/solr';
-import { JsonResponseData } from 'solr-client/dist/lib/types';
 import { DocumentsModel } from '../../models/document';
 import { IndexDocument } from '../indexDocInterface';
 
@@ -11,10 +10,14 @@ export default class SolrIndex {
   static client: Client;
 
   /**
-   * starts up the solr index with options in the env variables, used by generate()
-   * @param callback callback called after the function finishes loading, params are res: string and err: boolean
+   * starts up the solr index client with options in the env variables
    */
-  private static load(callback: (res: string, err: boolean) => void) {
+  private static async load(reload?: boolean) {
+
+    // simply return if the client is already loaded and it hasn't been asked to reaload
+    if (this.client && !reload) {
+      return;
+    }
 
     console.log("Starting up solr-client...");
 
@@ -26,97 +29,106 @@ export default class SolrIndex {
 
     this.client = solr.createClient(options);
 
-    this.client.ping().then( (mess: JsonResponseData) => {
+    try {
+      const mess = await this.client.ping()
       console.log("Loaded successfully! ");
       console.log(mess);
-      callback("Loaded successfully", false);
-    }).catch( (err: Error) => {
-      console.error(err);
-      callback("error: " + err, true);
-    });
+      // callback("Loaded successfully", false);
+    } catch (err) {
+      console.error("Error in load method:\n", err);
+    }
   }
 
   /**
    * generates the solr index from scratch from the database after finishing calling load() as a callback,
    * used when starting up or refreshing the server's index
-   * @param callback 
    */
-  static generate(callback: () => void) {
-    this.load( (res, err) => {
-      console.log("Entering load()...");
-      if (!err) {
-        //const docs = Documents.find().fetch(); // Carlos: original neurone method
-        DocumentsModel.find({}).then( (docs: any[]) => {
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const idxDocs: Record<string, any> = [];
-
-          /*  
-          //TODO: implement book, video, image
-          const books = Book.find().fetch(),
-              videos = Video.find().fetch(),
-              images = ImageSearch.find().fetch();
-              
-              docs = docs.concat(books.concat(videos).concat(images));
-          */
-          docs.forEach((doc) => {
-            console.log(doc);
-            // TODO: replace with indexDocument interface or create new interface
-            const newDoc = {
-              id: doc.docName,
-              docId_s: doc._id,
-              locale_s: doc.locale,
-              relevant_b: doc.relevant || false,
-              title_t: doc.title || '',
-              searchSnippet_t: doc.searchSnippet || [], // Carlos: changed '' to []
-              indexedBody_t: doc.indexedBody || '',
-              keywords_t: doc.keywords || [],
-              task_s: doc.task || [],
-              domain_s: doc.domain || [],
-              url_t: doc.url || '',
-              type_t: doc.type || 'page'
-            };
-            idxDocs.push(newDoc);
-          });
-          
-          console.log('entering delete()...');
-          // dgacitua: Deleting old documents
-          // Carlos: searchIndex from solr-node replaced with client from solr-client
-          this.client.delete('id', '*').then((res: unknown) => {
-
-            console.log('delete successful!!!!!!!\nResponse:');
-            console.log(res)
-            console.log("Entering add()...")
-            // dgacitua: Adding new documents
-            // Carlos: documents in idxDocs are added with solr-client's add method
-            this.client.add(idxDocs).then((obj: unknown) => {
-
-              console.log("Documents added to solr index! Details:");
-              console.log(obj);
-
-            }).catch((err: Error) => {
-              console.error(err);
-            });
-
-          }).catch( (err: Error) => {
-            console.error(err);
-          });
-        });
+  static async generate() {
+    if (!this.client) {
+      try{
+        await this.load();
+      } catch (err) {
+        console.error("Could nor generate index because load() could not complete.");
+        return;
       }
+    }
+
+    let docs: any[];
+    try{
+      //const docs = Documents.find().fetch(); // Carlos: original neurone method
+      docs = await DocumentsModel.find({});
+    } catch (err) {
+      console.error("Could not load documents from database.\n", err);
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const idxDocs: Record<string, any> = [];
+
+    /*  
+    //TODO: implement book, video, image
+    const books = Book.find().fetch(),
+    videos = Video.find().fetch(),
+    images = ImageSearch.find().fetch();
+    
+    docs = docs.concat(books.concat(videos).concat(images));
+    */
+
+    docs.forEach((doc) => {
+      console.log(doc);
+      // TODO: replace with indexDocument interface or create new interface
+      const newDoc = {
+        id: doc.docName,
+        docId_s: doc._id,
+        locale_s: doc.locale,
+        relevant_b: doc.relevant || false,
+        title_t: doc.title || '',
+        searchSnippet_t: doc.searchSnippet || [], // Carlos: changed '' to []
+        indexedBody_t: doc.indexedBody || '',
+        keywords_t: doc.keywords || [],
+        task_s: doc.task || [],
+        domain_s: doc.domain || [],
+        url_t: doc.url || '',
+        type_t: doc.type || 'page'
+      };
+      idxDocs.push(newDoc);
     });
+    
+    console.log('entering delete()...');
+    // dgacitua: Deleting old documents
+    // Carlos: searchIndex from solr-node replaced with client from solr-client
+
+    try {
+      const res = await this.client.delete('id', '*');
+      console.log("Deletion successful.\n", res);
+      console.log("Entering solr-client add()...");
+      const obj = await this.client.add(idxDocs);
+      console.log("Documents added to solr index successfully! Details:\n", obj);
+
+    } catch (err) {
+      console.error("Could not complete creation of new index.\n", err);
+    }
+
   }
 
   /**
    * Index one document (indexDocument type) in solr
-   * @param docObj the document to index
-   * @param callback function to run once it's done
+   * @param doc the document to index
    */
-  static index(doc:IndexDocument, callback: (err: boolean) => void) {
+  static async index(doc: IndexDocument) {
+
+    // load client
+    try{
+      await this.load();
+    } catch (err) {
+      console.error("Could nor generate index because load() could not complete.");
+      return;
+    }
 
     // TODO: test this method
     const newDoc = {
-      id: doc.id,
-      docId_s: doc.id,
+      id: doc._id,
+      docId_s: doc._id,
       locale_s: doc.locale,
       relevant_b: doc.relevant || false,
       title_t: doc.title || '',
@@ -129,14 +141,12 @@ export default class SolrIndex {
       type_t: /*doc.type ||*/ 'page' // TODO: check or ask what it 'type'
     };
 
-    this.client.add([newDoc]).then(() => {
-      console.log("Document indexed successfully");
-      callback(false);
-    }).catch((err: Error) => {
-      console.error("Error when indexing document:");
-      console.error(err);
-      callback(true);
-    })
+    try{
+      await this.client.add([newDoc]);
+      console.log("Document added successfully.");
+    } catch (err) {
+      console.error("Error when indexing document:\n", err);
+    }
   }
 
   /**
@@ -144,7 +154,17 @@ export default class SolrIndex {
    * @param queryObject object with query info
    * @returns response from solr
    */
-  static searchDocuments(queryObject: {query: string, locale?: string, task?: string, domain?: string}): SearchResponse<unknown> | void {
+  static async searchDocuments(queryObject: {query: string, locale?: string, task?: string, domain?: string}): Promise<SearchResponse<unknown> | void> {
+
+    // load client if it hasn't started up
+    if (!this.client) {
+      try{
+        await this.load();
+      } catch (err) {
+        console.error("Could nor generate index because load() could not complete.");
+        return;
+      }
+    }
 
     const queryString = queryObject.query,
           queryLocale = queryObject.locale ? queryObject.locale : null,
