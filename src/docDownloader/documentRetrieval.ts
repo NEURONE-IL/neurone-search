@@ -13,19 +13,17 @@ import { QueryObject } from '../interfaces/queryInterface';
 export default class DocumentRetrieval {
 
   /**
-   * gets the document with the matching "documentName" in the database (set to be unique)
+   * gets the document with the matching document name" in the database (set to be unique)
    * @param documentName the field "docName" of the document in the database
-   * @param callback the callback to be executed when the query is done
-   * @returns void
+   * @returns document in database
    */
-  static async getDocument(documentName: string, callback: (err: string | null, doc: unknown) => void) {
+  static async getDocument(documentName: string) {
 
     try{
       const doc = await DocumentsModel.findOne({ docName: documentName });
       if (doc && doc._id && doc.route) {
         doc.routeUrl = '/' + doc.route;
-        callback(null, doc);
-        return;
+        return doc;
       }
       /* //TODO: port books
       doc = Book.findOne({ _id: documentName})
@@ -43,14 +41,12 @@ export default class DocumentRetrieval {
       }
       */
       else{
-        const err = 'Document not found!';
-        console.log("documentRetrieval - getDocument(): Document not found");
-        callback(err, null);
+        console.log("documentRetrieval - getDocument(): Document not found: " + documentName);
+        return doc;
       }
     } catch(err) {
       console.error("documentRetrieval - getDocument(): Error getting document from database: \n", err);
-      callback("error", null)
-      return;
+      return {};
     }
 
       
@@ -149,12 +145,16 @@ export default class DocumentRetrieval {
     */
   }
 
-  // dgacitua: Search the current query object in one of the indexes available
+  /**
+   * dgacitua: Search the current query object in one of the indexes available
+   * @param queryObj the query object with the parameters of the query
+   * @returns array of documents found
+   */
   static async searchDocument(queryObj: QueryObject) {
     if (Indexer.checkSolrIndex()) {
       const res = await SolrIndex.searchDocuments(queryObj);
 
-      if (res && res.response.docs.length >= 1) return DocumentRetrieval.iFuCoSort(res.response.docs, 3, 2);
+      if (res && res.response.docs.length >= 1) return this.iFuCoSort(res.response.docs, 3, 2);
       else return res;
     }/*
     else {
@@ -168,7 +168,10 @@ export default class DocumentRetrieval {
     }*/
   }
 
-  // dgacitua: List all documents on database
+  /**
+   * dgacitua: List all documents on database
+   * @returns array of documents in database
+   */
   static async listAllDocuments() {
     try{
       return await DocumentsModel.find({});
@@ -178,7 +181,10 @@ export default class DocumentRetrieval {
     }
   }
 
-  // dgacitua: Regenerate inverted index
+  /**
+   * dgacitua: Regenerate inverted index
+   * @returns boolean representing success or failure
+   */
   static async reindex() {
     if (Indexer.checkSolrIndex()) {
       try{

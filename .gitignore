@@ -1,5 +1,6 @@
 # downloaded pages in assets
-assets/downloadedDocs/
+assets/downloadedDocs/*
+assets/previewDocs/*
 
 # Logs
 logs
