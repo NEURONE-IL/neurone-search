@@ -3,7 +3,8 @@ const solr = require('solr-client');
 import { SolrClientParams, Client } from 'solr-client';
 import { SearchResponse } from 'solr-client/dist/lib/solr';
 import { DocumentsModel } from '../../models/document';
-import { IndexDocument } from '../indexDocInterface';
+import { IndexDocument } from '../../interfaces/indexDocInterface';
+import { QueryObject } from '../../interfaces/queryInterface';
 
 export default class SolrIndex {
 
@@ -48,7 +49,7 @@ export default class SolrIndex {
       try{
         await this.load();
       } catch (err) {
-        console.error("Could nor generate index because load() could not complete.");
+        console.error("Could not generate index because load() could not complete.");
         return;
       }
     }
@@ -121,7 +122,7 @@ export default class SolrIndex {
     try{
       await this.load();
     } catch (err) {
-      console.error("Could nor generate index because load() could not complete.");
+      console.error("index(): could not load client.");
       return;
     }
 
@@ -153,14 +154,14 @@ export default class SolrIndex {
    * @param queryObject object with query info
    * @returns response from solr
    */
-  static async searchDocuments(queryObject: {query: string, locale?: string, task?: string, domain?: string}): Promise<SearchResponse<unknown> | void> {
+  static async searchDocuments(queryObject: QueryObject) {
 
     // load client if it hasn't started up
     if (!this.client) {
       try{
         await this.load();
       } catch (err) {
-        console.error("Could nor generate index because load() could not complete.");
+        console.error("searchDocument(): could not load client.");
         return;
       }
     }

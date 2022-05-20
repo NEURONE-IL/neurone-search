@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 
 import SolrIndex from './docDownloader/indexes/solrIndex';
 import Indexer from './docDownloader/indexer';
-import { IndexDocument } from './docDownloader/indexDocInterface';
+import { IndexDocument } from './interfaces/indexDocInterface';
 import { DocumentDownloader } from './docDownloader/documentDownloader';
 
 const app = express();
@@ -20,6 +20,7 @@ app.use((req, res, next) => {
 
 import download from './routes/download';
 import search from './routes/search';
+import DocumentRetrieval from './docDownloader/documentRetrieval';
 
 app.use(download);
 app.use(search);
@@ -135,17 +136,18 @@ try{
   console.error(err);
 }*/
 
-
-
-
 /*
-try{
+try {
   SolrIndex.searchDocuments({query: 'value'}).then((doc:any) => {
     console.log("\n\nRESPONSE:\n\n");
     console.log(doc);
-    console.log(doc.response);
   });
 } catch (err) {
   console.error(err);
 }
 */
+/*
+DocumentRetrieval.getDocument("api-test-ps4", (error: any, doc: any) => {
+  console.log("\n\nDONE\n\n");
+  console.log(doc);
+})*/

@@ -15,7 +15,7 @@ import { URL } from 'url';
 import readdir from 'readdir-enhanced';
 import scrape from 'website-scraper'; // TODO: Check if 5.0.0 can be made compatible with commonjs https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
 
-import { IndexDocument } from './indexDocInterface'
+import { IndexDocument } from '../interfaces/indexDocInterface'
 
 const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36';
 const errorObj = { msg: 'ERROR!' };

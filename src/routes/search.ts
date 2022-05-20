@@ -1,6 +1,6 @@
 import express from 'express';
 import { DocumentDownloader } from '../docDownloader/documentDownloader';
-import { IndexDocument } from '../docDownloader/indexDocInterface';
+import { IndexDocument } from '../interfaces/indexDocInterface';
 import Indexer from '../docDownloader/indexer';
 
 

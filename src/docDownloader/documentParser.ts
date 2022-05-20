@@ -8,7 +8,7 @@ import sha from 'sha';
 import { load } from 'cheerio';
 import { htmlToText } from 'html-to-text';
 import { pascalCase } from 'change-case'; // Carlos: replacing the older package 'uppercamelcase'
-import { IndexDocument } from './indexDocInterface';
+import { IndexDocument } from '../interfaces/indexDocInterface';
 
 //import Utils from './utils/serverUtils';
 

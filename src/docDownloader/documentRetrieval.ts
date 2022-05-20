@@ -1,75 +1,100 @@
-// Carlos: WIP - STARTING TO PORT
-
 import SolrIndex from './indexes/solrIndex';
-import LunrIndex from './indexes/lunrIndex';
+//import LunrIndex from './indexes/lunrIndex';
 import Indexer from './indexer';
 
-import Utils from '../utils/serverUtils';
+import Utils from './utils/serverUtils';
 
-import { Documents } from '../../imports/database/documents/index';
-import { Video, Book } from '../database/definitions';
+//import { Documents } from '../../imports/database/documents/index';
+//import { Video, Book } from '../database/definitions';
+import { DocumentsModel } from '../models/document';
+import { QueryObject } from '../interfaces/queryInterface';
+
 
 export default class DocumentRetrieval {
-  static getDocument(documentName, callback) {
-    var doc = Documents.findOne({ _id: documentName });
 
-    if (doc && doc._id && doc.route) {
-      doc.routeUrl = '/' + doc.route;
-      callback(null, doc);
-    }
-    else {
+  /**
+   * gets the document with the matching "documentName" in the database (set to be unique)
+   * @param documentName the field "docName" of the document in the database
+   * @param callback the callback to be executed when the query is done
+   * @returns void
+   */
+  static async getDocument(documentName: string, callback: (err: string | null, doc: unknown) => void) {
+
+    try{
+      const doc = await DocumentsModel.findOne({ docName: documentName });
+      if (doc && doc._id && doc.route) {
+        doc.routeUrl = '/' + doc.route;
+        callback(null, doc);
+        return;
+      }
+      /* //TODO: port books
       doc = Book.findOne({ _id: documentName})
       if (doc && doc._id && doc.route) {
         doc.routeUrl = '/' + doc.route;
         callback(null, doc);
+        return;
       }
+      // TODO: port videos
+      doc = Video.findOne({ _id: documentName})
+      if (doc && doc._id && doc.route) {
+        doc.routeUrl = '/' + doc.route;
+        callback(null, doc);
+        return;
+      }
+      */
       else{
-        doc = Video.findOne({ _id: documentName})
-        if (doc && doc._id && doc.route) {
-          doc.routeUrl = '/' + doc.route;
-          callback(null, doc);
-        }
-        else{
-        var err = 'Document not found!';
-        callback(err);
-        }
+        const err = 'Document not found!';
+        console.log("documentRetrieval - getDocument(): Document not found");
+        callback(err, null);
       }
-      
+    } catch(err) {
+      console.error("documentRetrieval - getDocument(): Error getting document from database: \n", err);
+      callback("error", null)
+      return;
     }
+
+      
   }
 
  
+  /**
+   * dgacitua: Custom sorting algorithm for iFuCo Project
+   * @param documentArray Array with resulting documents from Indexer
+   * @param insertions Algorithm will check from first to <insertions> position for relevant documents
+   * @param offset Algorithm will insert a relevant document at this position (1 is first position)
+   * @returns sorted array
+   */
+  static iFuCoSort(documentArray: any[], insertions: number, offset: number) {
 
-  // dgacitua: Custom sorting algorithm for iFuCo Project
-  // PARAMS:  documentArray  Array with resulting documents from Lunr
-  //          insertions     Algorithm will check from first to <insertions> position for relevant documents
-  //          offset         Algorithm will insert a relevant document at this position (1 is first position)
-  static iFuCoSort(documentArray, insertions, offset) {
+    /*
+    // TS makes this redundant
     check(documentArray, Array);
     check(insertions, Number);
     check(offset, Number);
+    */
 
     //==============//
     // iFuCoSort v3 //
     //==============//
-    var newArray = documentArray,
-       insertNum = newArray.length < insertions ? newArray.length : insertions,
-       offsetPos = newArray.length < offset ? newArray.length : offset;
+    // Carlos: adapted code a bit to modern TS/JS, algorithm unchanged
+    let newArray = documentArray;
+    const insertNum = newArray.length < insertions ? newArray.length : insertions
+    const offsetPos = newArray.length < offset ? newArray.length : offset;
 
     if (newArray.length >= 2 && newArray[0].relevant) {
-      for (var k=0; k<newArray.length; k++) {
+      for (let k=0; k<newArray.length; k++) {
         if (!newArray[k].relevant) {
           newArray = Utils.moveInArray(newArray, k, 0);
           break;
         }
-      }        
+      }
     }
 
-    for (var i=0; i<insertNum; i++) {
+    for (let i=0; i<insertNum; i++) {
       if (newArray[i].relevant) return newArray;
     }
 
-    for (var j=0; j<newArray.length; j++) {
+    for (let j=0; j<newArray.length; j++) {
       if (newArray[j].relevant) {
         newArray = Utils.moveInArray(newArray, j, offsetPos-1);
         return newArray;  
@@ -125,41 +150,49 @@ export default class DocumentRetrieval {
   }
 
   // dgacitua: Search the current query object in one of the indexes available
-  static searchDocument(queryObj) {
+  static async searchDocument(queryObj: QueryObject) {
     if (Indexer.checkSolrIndex()) {
-      var qo = queryObj,
-        call = Meteor.wrapAsync(SolrIndex.searchDocuments),
-         res = call(qo);
+      const res = await SolrIndex.searchDocuments(queryObj);
 
-      if (res.length >= 1) return DocumentRetrieval.iFuCoSort(res, 3, 2);
+      if (res && res.response.docs.length >= 1) return DocumentRetrieval.iFuCoSort(res.response.docs, 3, 2);
       else return res;
-    }
+    }/*
     else {
-      var qo = queryObj,
+      // TODO: replace lunr
+      const qo = queryObj,
         res1 = LunrIndex.searchDocuments(qo.query),
         res2 = res1.filter((d) => { return d.locale === qo.locale && d.task.indexOf(qo.task) !== -1 && d.domain.indexOf(qo.domain) !== -1 });
 
       if (res2.length >= 1) return DocumentRetrieval.iFuCoSort(res2, 3, 2);
       else return res2;
-    }
+    }*/
   }
 
   // dgacitua: List all documents on database
-  static listAllDocuments() {
-    return Documents.find().fetch();
+  static async listAllDocuments() {
+    try{
+      return await DocumentsModel.find({});
+    } catch (err) {
+      console.error(err);
+      return;
+    }
   }
 
   // dgacitua: Regenerate inverted index
-  static reindex() {
+  static async reindex() {
     if (Indexer.checkSolrIndex()) {
-      let asyncCall = Meteor.wrapAsync(SolrIndex.generate),
-              fetch = asyncCall();
-
-      return true;
-    }
+      try{
+        await SolrIndex.generate();
+        return true;
+      } catch (err){
+        console.error(err)
+        return false;
+      }
+    }/*
     else {
+      // TODO: replace lunr
       LunrIndex.generate();
       return true;
-    }
+    }*/
   }
 }
