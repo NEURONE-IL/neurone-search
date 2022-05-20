@@ -5,6 +5,7 @@ import { IndexDocument } from '../docDownloader/indexDocInterface';
 
 const router = express.Router();
 
+// download, save in db and index automatically rquested document, send back saved object in database
 router.post('/download', (req, res) => {
   console.log("URL!!!!!!!!!!!!: ", req.body.url);
 
@@ -25,19 +26,25 @@ router.post('/download', (req, res) => {
     hash: '',
   };
 
-  DocumentDownloader.fetch( 
+  DocumentDownloader.fetch(
     indexedDocument, 
-    (err: unknown, res: any) => { 
-      if(!err){      
-        console.log('ok2');
+    (err: unknown, result: unknown) => {
+      try{
+        if(!err){      
+          console.log('FETCH IS DONE');
+          console.log(result);
+          res.status(200).json({message: "Successful", result: result});
+        }
+        else {
+          console.error("Error in downloader API (post):\n", err);
+          res.status(500).json({message: "Could not download or index the document.", error: err});
+        }
+      } catch (err) {
+        console.error("Error in downloader API (post):\n", err);
+        res.status(500).json({message: "Error in the code of the document downloader."})
       }
-      else { 
-        console.error("ERROR: \n");
-        console.error(err);
-      } 
     });
 
-  res.status(200).json({message: "Successful"}); // TODO: react to the result of fetch in case of an error
 });
 
 export default router;

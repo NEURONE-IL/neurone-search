@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 
 import DocumentParser from './documentParser';
-//import Indexer from './indexer';
+import Indexer from './indexer';
 
 import ServerConfigs from './utils/serverConfigs';
 import Utils from './utils/serverUtils';
@@ -16,7 +16,6 @@ import readdir from 'readdir-enhanced';
 import scrape from 'website-scraper'; // TODO: Check if 5.0.0 can be made compatible with commonjs https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
 
 import { IndexDocument } from './indexDocInterface'
-import mongoose from 'mongoose';
 
 const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36';
 const errorObj = { msg: 'ERROR!' };
@@ -113,10 +112,7 @@ export class DocumentDownloader {
     });
   }
 
-  // TODO: DEFINIR BIEN ESTE PARAMETRO DE ENTRADA (docObj) PARA QUE SEA INDEXABLE POR STRINGS Y ARREGLAR ERROR DE TS, es indexedDocument basicamente
-  // TODO: port to solr-client, commenting for now
   // dgacitua: Download and index downloaded document
-  
   static index(docObj: IndexDocument, callback: any) {
     const indexedDocument: IndexDocument = { 
       docName: docObj.docName,
@@ -144,22 +140,13 @@ export class DocumentDownloader {
         const check = DocumentParser.cleanDocument(res.fullPath, indexedDocument.url);
         const docInfo = DocumentParser.getDocumentInfo(res.fullPath);
 
-        // Carlos: array emulates old behaviour without interface to avoid issues with TS types in indexes
-        // TODO: Arreglar para agregar 
-        /*
-        for (const attrname of ['title', 'indexedBody', 'date', 'docName', 'name', 'route', 'hash']) {
-
-          if (Utils.isEmpty(indexedDocument[attrname as keyof typeof indexedDocument])) {
-            indexedDocument[attrname as keyof typeof indexedDocument] = docInfo[attrname as keyof typeof docInfo]
-          }
-        }
-        */
-        console.log("RUNNING findOneAndUpdate");
-        const result = await DocumentsModel.findOneAndUpdate({ route: indexedDocument.route }, indexedDocument, { new: true, upsert: true });
-        console.log("findOneAndUpdate SUCCESSFUL");
-
         // Carlos: original result, new uses mongoose
         //const result = Documents.upsert({ route: indexedDocument.route }, indexedDocument);
+        console.log("RUNNING findOneAndUpdate");
+        const result = await DocumentsModel.findOneAndUpdate({ route: indexedDocument.route }, indexedDocument, { new: true, upsert: true, rawResult: true });
+        console.log(result);
+        console.log("findOneAndUpdate SUCCESSFUL");
+
 
         const urlOrigin = new URL(docObj.url).origin.split('://')[1];
         let directory = path.join(res.fullPath,'../..'),
@@ -167,8 +154,8 @@ export class DocumentDownloader {
         
 
         while(currentFolder != docObj.docName){
-          directory = path.join(directory, '../')
-          currentFolder = path.basename(directory)
+          directory = path.join(directory, '../');
+          currentFolder = path.basename(directory);
         }
 
         readdir(directory,{filter: getImg , deep: true}, function(err, files){
@@ -199,26 +186,29 @@ export class DocumentDownloader {
           })
         })
 
-        // TODO: check if numberAffected works
-        if (result.numberAffected > 0) { console.log("todo: delete this log ")} // <- TODO: delete closing brace when uncommenting
-          // Carlos: original
-          //const doc = Documents.findOne({ route: indexedDocument.route });
-          const doc = DocumentsModel.findOne({ route: indexedDocument.route });
-          /* TODO: port to solr-client
-          Indexer.indexDocumentAsync(doc, (err2: any, res2: any) => {
-            if (!err2) {
-              callback(null, doc);  
-            }
-            else {
-              console.error('Error while indexing document', docObj.url, err2);
-              callback(err2);
-            }
+        // ok is 1 if there is no error
+        if (result.ok === 1) {
+
+          DocumentsModel.findOne({ route: indexedDocument.route }).then((doc:any) => {
+            Indexer.indexDocumentAsync(doc, (err2: any, res2: any) => {
+              if (!err2) {
+                callback(null, doc);  
+              }
+              else {
+                console.error('Error while indexing document', docObj.url, err2);
+                callback(err2, null);
+              }
+            });
+          }).catch( (err: Error) => {
+            console.error(err);
+            callback(err, null);
           });
+
         }
         else {
           console.error('Error while saving document to Database', docObj.url, errorObj);
           callback(errorObj);
-        }*/
+        }
       }
       else {
         callback(err);
@@ -226,6 +216,7 @@ export class DocumentDownloader {
     }));
   }
 
+  // fetch() -> index() -> download()
   static fetch(docObj: IndexDocument, callback: any) {
     console.log('Attempting to download document!');
 
@@ -248,7 +239,8 @@ export class DocumentDownloader {
     }
   }
 
-  static preview(docObj: { docName: string; url: any; title: any; locale: any; relevant: any; task: any; domain: any; keywords: any; date: any; maskedUrl: any; searchSnippet: any; }, callback: any) {
+  // preview() -> download()
+  static preview(docObj: IndexDocument, callback: (error: any, document?: any) => void) {
     console.log('Attempting to preview document!');
 
     if (!Utils.isEmptyObject(docObj) && Utils.isString(docObj.docName) && Utils.isString(docObj.url)) {
@@ -280,17 +272,7 @@ export class DocumentDownloader {
 
           const check = DocumentParser.cleanDocument(res.fullPath, document.url);
           const docInfo = DocumentParser.getDocumentInfo(res.fullPath);
-  
-          // Carlos: array emulates old behaviour without interface to avoid issues with TS types in indexes
-          // Carlos: TODO: arreglar una vez que esté corriendo programa
-          /*
-          for (const attrname of ['title', 'indexedBody', 'date', 'docName', 'name', 'route', 'hash']) {
 
-            if (Utils.isEmpty(document[attrname])) {
-              document[attrname] = docInfo[attrname as keyof typeof docInfo]
-            }
-          }
-          */
           console.log('Document downloaded for preview successfully!', docObj.url);
 
           callback(null, document);

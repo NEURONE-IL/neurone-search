@@ -53,7 +53,7 @@ export default class SolrIndex {
       }
     }
 
-    let docs: any[];
+    let docs: IndexDocument[];
     try{
       //const docs = Documents.find().fetch(); // Carlos: original neurone method
       docs = await DocumentsModel.find({});
@@ -88,8 +88,8 @@ export default class SolrIndex {
         keywords_t: doc.keywords || [],
         task_s: doc.task || [],
         domain_s: doc.domain || [],
-        url_t: doc.url || '',
-        type_t: doc.type || 'page'
+        url_t: doc.url || ''
+        //type_t: doc.type || 'page' // TODO: is this to differentiate pages, books, videos, imgs?
       };
       idxDocs.push(newDoc);
     });
@@ -125,7 +125,6 @@ export default class SolrIndex {
       return;
     }
 
-    // TODO: test this method
     const newDoc = {
       id: doc._id,
       docId_s: doc._id,
@@ -184,20 +183,15 @@ export default class SolrIndex {
 
     // query to solr
     const queryObj = this.client.query().q(query);
-    this.client.search(queryObj).then((res: SearchResponse<unknown>) => {
+    try {
+      const res = await this.client.search(queryObj);
       console.log("queryObject:", res);
-      console.log(res.response.docs);
       return res;
-    }).catch( (err: Error) => {
+    } catch(err) {
       console.error(err);
-      return {};
-    });
-    
-    /* // test to get all docs
-    this.client.searchAll().then((res:any) => {
-      console.log(res);
-      console.log(res.response.docs)
-    })*/
+      return;
+    }
+
   }
 
 }

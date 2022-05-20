@@ -3,8 +3,8 @@ import path from 'path';
 import glob from 'glob';
 
 import Utils from './utils/serverUtils';
-//import SolrIndex from './indexes/solrIndex';
-import LunrIndex from './indexes/lunrIndex';
+import SolrIndex from './indexes/solrIndex';
+//import LunrIndex from './indexes/lunrIndex';
 import DocumentParser from './documentParser';
 import { DocumentsModel } from '../models/document';
 
@@ -125,16 +125,17 @@ export default class Indexer {
     return (!!process.env.NEURONE_SOLR_HOST && !!process.env.NEURONE_SOLR_PORT && !!process.env.NEURONE_SOLR_CORE);
   }
 
+  // TODO: unnecesary under new structure?
   static loadInvertedIndex() {
     try {
       if (Indexer.checkSolrIndex()) {
-        //const fn = Meteor.wrapAsync(SolrIndex.load), // TODO: check if it's fixed with new solr implementation
-        // const res = fn(); // Carlos: unused?
+        //SolrIndex.load(); // TODO: check if it's fixed with new solr implementation
+        
 
         return true;
       }
       else {
-        LunrIndex.load();
+        //LunrIndex.load();
         return true;
       }
     }
@@ -147,13 +148,13 @@ export default class Indexer {
   static generateInvertedIndex() {
     try {
       if (Indexer.checkSolrIndex()) {
-        //let fn = Meteor.wrapAsync(SolrIndex.generate); // TODO: check if new solr implementation works
+        SolrIndex.generate(); // TODO: check if new solr implementation works
         // const res = fn(); // Carlos: unused?
 
         return true;
       }
       else {
-        LunrIndex.generate();
+        //LunrIndex.generate();
         return true;
       }
     }
@@ -163,19 +164,13 @@ export default class Indexer {
     }
   }
 
-  static indexDocumentAsync(docObj: any, callback: (arg0: null, arg1?: boolean | undefined) => void) {
+  static async indexDocumentAsync(docObj: any, callback: (arg0: null, arg1?: boolean | undefined) => void) {
     if (Indexer.checkSolrIndex()) {
-      SolrIndex.index(docObj, (err: null, res: any) => {
-        if (!err) {
-          callback(null, true);
-        }
-        else {
-          callback(err);
-        }
-      });
+      await SolrIndex.index(docObj);
+      callback(null, true);
     }
     else {
-      LunrIndex.index(docObj);
+      //LunrIndex.index(docObj);
       callback(null, true);
     }
   }

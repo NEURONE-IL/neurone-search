@@ -2,6 +2,8 @@ import 'dotenv/config'
 import express from 'express';
 import mongoose from 'mongoose';
 
+import SolrIndex from './docDownloader/indexes/solrIndex';
+import Indexer from './docDownloader/indexer';
 import { IndexDocument } from './docDownloader/indexDocInterface';
 import { DocumentDownloader } from './docDownloader/documentDownloader';
 
@@ -17,8 +19,12 @@ app.use((req, res, next) => {
 });
 
 import download from './routes/download';
-import SolrIndex from './docDownloader/indexes/solrIndex';
+import search from './routes/search';
+
 app.use(download);
+app.use(search);
+
+app.use(express.static('assets'));
 
 /*
 // Load dependency
@@ -61,14 +67,23 @@ mongoose.connection.on('error', err => {
 
 connectToDB(); 
 
+app.get('/', (req, res) => {
+    res.send(`This is the neurone-search backend on port ${port}!`);
+});
+app.listen(port, () => {
+  return console.log(`server is listening on ${port}`);
+});
+
+
+// DOC DOWNLOADER TEST
 /*
-example of use in api
+//example of use in api
 const obj2: IndexDocument = {
-  docName: 'wiki-en', 
-  url: 'https://en.wikipedia.org/',
+  docName: 'speedrun', 
+  url: 'https://www.speedrun.com/',
   //_id: '1234',
-  title: '',
-  locale: '',
+  title: 'speedrun dot com',
+  locale: 'en',
   task: [],
   domain: [],
   keywords: [],
@@ -80,19 +95,57 @@ const obj2: IndexDocument = {
   hash: ''
 };
 
-DocumentDownloader.fetch(obj2, (err: unknown, res: any) => { if(!err) console.log('ok2'); else {console.error("ERROR: \n" + err)} });
+DocumentDownloader.fetch(obj2, (err: unknown, res: any) => { 
+  if(!err) {
+    console.log('TEST ok');
+    SolrIndex.searchDocuments({query: "github"}).then((q: any)=>{
+      console.log(q);
+      console.log("DONE.");
+    });
+  }
+  else {
+    console.error("ERROR: \n", err)
+  }
+});
 */
 
-app.get('/', (req, res) => {
-    res.send(`This is the neurone-search backend on port ${port}!`);
-});
-app.listen(port, () => {
-  return console.log(`server is listening on ${port}`);
-});
 
-
-
-
+//Indexer.generateDocumentCollection('test/test'); //TODO: this does nothing?????????
+/*
 // SOLR CLIENT TEST
-SolrIndex.generate(() => {console.log("filler pls ignore")});
-SolrIndex.searchDocuments({query: 'value'});
+try{
+  //SolrIndex.generate();
+  //SolrIndex.searchDocuments({query: 'value'});
+  SolrIndex.index({
+    docName: "TEST",
+    title: "title",
+    locale: "en",
+    date: "today?",
+    task: [''],
+    domain: [''],
+    keywords: ['key'],
+    url: 'url',
+    maskedUrl: 'url(masked)',
+    searchSnippet: ['Hello'],
+    indexedBody: 'hola este es un ejemplo',
+    route: '',
+    hash: ''
+  })
+} catch (err) {
+  console.error(err);
+}*/
+
+
+
+
+/*
+try{
+  SolrIndex.searchDocuments({query: 'value'}).then((doc:any) => {
+    console.log("\n\nRESPONSE:\n\n");
+    console.log(doc);
+    console.log(doc.response);
+  });
+} catch (err) {
+  console.error(err);
+}
+*/
