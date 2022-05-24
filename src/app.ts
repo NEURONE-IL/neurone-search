@@ -1,11 +1,12 @@
-import 'dotenv/config'
+import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
 
-import SolrIndex from './docDownloader/indexes/solrIndex';
-import Indexer from './docDownloader/indexer';
+import SolrIndex from './documentIndexer/indexes/solrIndex';
+import Indexer from './documentIndexer/indexer';
 import { IndexDocument } from './interfaces/indexDocInterface';
 import { DocumentDownloader } from './docDownloader/documentDownloader';
+import DocumentRetrieval from './documentIndexer/documentRetrieval';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -14,17 +15,17 @@ app.use(express.json()); // TODO: add form data support
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS" )
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS" );
     next();
 });
 
 import download from './routes/download';
 import search from './routes/search';
-import DocumentRetrieval from './docDownloader/documentRetrieval';
 
 app.use(download);
 app.use(search);
 
+// expose in the localhost router to see files in browser
 app.use(express.static('assets'));
 
 /*

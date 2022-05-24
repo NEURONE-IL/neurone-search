@@ -2,9 +2,8 @@ import fs from 'fs-extra';
 import path from 'path';
 
 import DocumentParser from './documentParser';
-import Indexer from './indexer';
+import Indexer from '../documentIndexer/indexer';
 
-import ServerConfigs from './utils/serverConfigs';
 import Utils from './utils/serverUtils';
 
 import { DocumentsModel } from '../models/document';
@@ -48,7 +47,7 @@ export class DocumentDownloader {
   }
 
   // dgacitua: Automatic document download from web
-  static download(docName: string, documentUrl: any, isIndexable: boolean, callback: (arg0: Error | null, arg1?: {
+  static download(docName: string, documentUrl: string, isIndexable: boolean, callback: (arg0: Error | null, arg1?: {
       docName: string; pageUrl: string; // Carlos: added null ckeck
       route: string; fullPath: string;
     } | undefined) => void) {

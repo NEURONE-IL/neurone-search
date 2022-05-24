@@ -2,11 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import glob from 'glob';
 
-import Utils from './utils/serverUtils';
-import SolrIndex from './indexes/solrIndex';
+//import Utils from './utils/serverUtils';
+import SolrIndex from '../documentIndexer/indexes/solrIndex';
 //import LunrIndex from './indexes/lunrIndex';
-import DocumentParser from './documentParser';
+import DocumentParser from '../docDownloader/documentParser';
 import { DocumentsModel } from '../models/document';
+import { IndexDocument } from '../interfaces/indexDocInterface';
 
 //import { Documents } from '../../imports/database/documents/index'; // TODO: define this import
 
@@ -32,14 +33,14 @@ export default class Indexer {
       const files = glob.sync(path.join(assetPath, 'documents', '*.json')),
             total = files.length;
 
-      files.forEach((file: string, idx: number, arr: any) => {
+      files.forEach((file: string, idx: number) => {
         const fn = path.basename(file);
         console.log('Reading document list file!', '[' + (idx+1) + '/' + total + ']', fn);
 
         const documentList = JSON.parse(fs.readFileSync(file, 'utf-8')); // Carlos: added encoding
         const total2 = documentList.length;
 
-        documentList.forEach((doc: { route: string; title: any; task: any; domain: any; locale: any; url: string; }, idx2: number, arr2: any) => {
+        documentList.forEach((doc: { route: string; title: string; task: string[]; domain: string[]; locale: string; url: string; }, idx2: number) => {
           if (doc.route && doc.title && doc.task && doc.domain && doc.locale && doc.url) {
             const docRoute = path.join(assetPath, doc.route);
             const fn = path.basename(doc.route);
@@ -47,6 +48,9 @@ export default class Indexer {
             if (fs.existsSync(docRoute)) {
               const check = DocumentParser.cleanDocument(docRoute, doc.url);
 
+              if (!check) {
+                console.log("Error in document cleaner! Called from generateDocumentCollection()");
+              }
               
               const docInfo = DocumentParser.getDocumentInfo(docRoute);
 
@@ -63,7 +67,7 @@ export default class Indexer {
               const docObj = { ...doc, ...docInfo  }
 
               //const result = Documents.upsert({ route: docObj.route }, docObj); Carlos: original upsert
-              DocumentsModel.findOneAndUpdate({ route: docObj.route }, docObj, {new: true, upsert: true}).then( (result: any) => {
+              DocumentsModel.findOneAndUpdate({ route: docObj.route }, docObj, {new: true, upsert: true}).then( (result) => {
                 // TODO: check this print and see if "numbersAffected" is a thing
                 console.log("TODO: DOES numbersAffected EXIST IN THIS RESTULT VARIABLE?:");
                 console.log(result);
@@ -97,13 +101,13 @@ export default class Indexer {
     try {
       console.log('Removing listed documents without HTML file from database...');
 
-      const syncedList: any[] = [];
+      const syncedList: string[] = [];
       const files = glob.sync(path.join(assetPath, 'documents', '*.json'));
 
-      files.forEach((file: fs.PathOrFileDescriptor, idx: any, arr: any) => {
+      files.forEach((file: fs.PathOrFileDescriptor) => {
         const documentList = JSON.parse(fs.readFileSync(file, 'utf-8')); // Carlos: added utf-8 encoding
 
-        documentList.forEach((doc: { route: string; }, idx2: any, arr2: any) => {
+        documentList.forEach((doc: { route: string; }) => {
           const docRoute = path.join(assetPath, doc.route);
           if (fs.existsSync(docRoute)) syncedList.push(doc.route);
         });
@@ -164,7 +168,7 @@ export default class Indexer {
     }
   }
 
-  static async indexDocumentAsync(docObj: any, callback: (arg0: null, arg1?: boolean | undefined) => void) {
+  static async indexDocumentAsync(docObj: IndexDocument, callback: (arg0: null, arg1?: boolean | undefined) => void) {
     if (Indexer.checkSolrIndex()) {
       await SolrIndex.index(docObj);
       callback(null, true);

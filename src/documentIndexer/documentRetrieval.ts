@@ -2,7 +2,7 @@ import SolrIndex from './indexes/solrIndex';
 //import LunrIndex from './indexes/lunrIndex';
 import Indexer from './indexer';
 
-import Utils from './utils/serverUtils';
+import Utils from '../docDownloader/utils/serverUtils';
 
 //import { Documents } from '../../imports/database/documents/index';
 //import { Video, Book } from '../database/definitions';
@@ -60,6 +60,7 @@ export default class DocumentRetrieval {
    * @param offset Algorithm will insert a relevant document at this position (1 is first position)
    * @returns sorted array
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static iFuCoSort(documentArray: any[], insertions: number, offset: number) {
 
     /*

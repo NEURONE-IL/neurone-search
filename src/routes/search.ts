@@ -1,5 +1,5 @@
 import express from 'express';
-import DocumentRetrieval from '../docDownloader/documentRetrieval';
+import DocumentRetrieval from '../documentIndexer/documentRetrieval';
 
 
 const router = express.Router();

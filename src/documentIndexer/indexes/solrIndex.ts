@@ -1,7 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const solr = require('solr-client');
 import { SolrClientParams, Client } from 'solr-client';
-import { SearchResponse } from 'solr-client/dist/lib/solr';
 import { DocumentsModel } from '../../models/document';
 import { IndexDocument } from '../../interfaces/indexDocInterface';
 import { QueryObject } from '../../interfaces/queryInterface';
