@@ -1,4 +1,5 @@
 import SolrIndex from './indexes/solrIndex';
+import 'dotenv/config';
 //import LunrIndex from './indexes/lunrIndex';
 import Indexer from './indexer';
 
@@ -54,7 +55,7 @@ export default class DocumentRetrieval {
 
  
   /**
-   * dgacitua: Custom sorting algorithm for iFuCo Project
+   * dgacitua: Custom sorting algorithm for iFuCo Project, moves the first element of the arrray if it's relevant to simulate pages with ads
    * @param documentArray Array with resulting documents from Indexer
    * @param insertions Algorithm will check from first to <insertions> position for relevant documents
    * @param offset Algorithm will insert a relevant document at this position (1 is first position)
@@ -63,12 +64,10 @@ export default class DocumentRetrieval {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static iFuCoSort(documentArray: any[], insertions: number, offset: number) {
 
-    /*
-    // TS makes this redundant
-    check(documentArray, Array);
-    check(insertions, Number);
-    check(offset, Number);
-    */
+    // check if iFuCoSort is disabled
+    if (process.env.NEURONE_IFUCO_SORT_DISABLE){
+      return documentArray;
+    }
 
     //==============//
     // iFuCoSort v3 //
@@ -155,8 +154,10 @@ export default class DocumentRetrieval {
     if (Indexer.checkSolrIndex()) {
       const res = await SolrIndex.searchDocuments(queryObj);
 
-      if (res && res.response.docs.length >= 1) return this.iFuCoSort(res.response.docs, 3, 2);
-      else return res;
+      if (res && res.response.docs.length >= 1) 
+        return this.iFuCoSort(res.response.docs, 3, 2);
+      else 
+        return res;
     }/*
     else {
       // TODO: replace lunr

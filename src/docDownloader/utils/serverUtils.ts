@@ -1,12 +1,12 @@
-import fs from 'fs';
 import path from 'path';
+import 'dotenv/config';
 
 const rootPath = path.resolve('.');
 
 export default class ServerUtils {
   // dgacitua: Check if string is empty
   // http://stackoverflow.com/a/3261380
-  static isEmpty(str) {
+  static isEmpty(str: string) {
     return (!str || 0 === str.length);
   } 
 
@@ -15,15 +15,14 @@ export default class ServerUtils {
   }
 
   static getDate() {
-    var date = new Date();
+    const date = new Date();
     return date.toString();
   }
 
-  static timestamp2datetime(timestamp) {
-    var date = new Date(timestamp);
-    return date;
+  static timestamp2datetime(timestamp: string | number | Date) {
+    return new Date(timestamp);
   }
-
+/*// Carlos: unused
   static timestamp2date(timestamp) {
     return moment(timestamp).format("YYYY-MM-DD");
   }
@@ -31,10 +30,12 @@ export default class ServerUtils {
   static timestamp2time(timestamp) {
     return moment(timestamp).format("HH:mm:ss.SSS");
   }
+*/
 
+/* // trivial in TS: Object.keys(obj).length === 0
   static isEmptyObject(obj) {
     // Speed up calls to hasOwnProperty
-    var hasOwnProperty = Object.prototype.hasOwnProperty;
+    const hasOwnProperty = Object.prototype.hasOwnProperty;
 
     // null and undefined are "empty"
     if (obj == null) return true;
@@ -52,16 +53,17 @@ export default class ServerUtils {
     // Otherwise, does it have any properties of its own?
     // Note that this doesn't handle
     // toString and valueOf enumeration bugs in IE < 9
-    for (var key in obj) {
+    for (const key in obj) {
       if (hasOwnProperty.call(obj, key)) return false;
     }
 
     return true;
   }
+*/
 
   // dgacitua: Move element in array from one position to another
   // http://stackoverflow.com/a/5306832
-  static moveInArray(array, old_index, new_index) {
+  static moveInArray(array: undefined[], old_index: number, new_index: number) {
     while (old_index < 0) {
       old_index += array.length;
     }
@@ -69,7 +71,7 @@ export default class ServerUtils {
       new_index += array.length;
     }
     if (new_index >= array.length) {
-      var k = new_index - array.length;
+      let k = new_index - array.length;
       while ((k--) + 1) {
         array.push(undefined);
       }
@@ -80,21 +82,24 @@ export default class ServerUtils {
     return array;
   }
 
+  // Carlos: irrelevant in TS
+/*
   // dgacitua: Check if variable is a string
   // http://stackoverflow.com/a/9436948
-  static isString(testStr) {
+  static isString(testStr: any) {
     return (typeof testStr === 'string' || testStr instanceof String);
   }
+*/
 
   // dgacitua: Generate a random integer between two numbers
   // https://blog.tompawlak.org/generate-random-values-nodejs-javascript
-  static randomInteger(low, high) {
+  static randomInteger(low: number, high: number) {
     return Math.floor(Math.random() * (high - low + 1) + low);
   }
 
   // dgacitua: Get variable type as string
   // http://stackoverflow.com/a/28475765
-  static getVarType(obj) {
+  static getVarType(obj: any) {
     return {}.toString.call(obj).split(' ')[1].slice(0, -1).toLowerCase();
   }
 /* Carlos: meteor dependency
@@ -109,21 +114,18 @@ export default class ServerUtils {
     else {
       if (process.env.NEURONE_ASSET_PATH) {
         return process.env.NEURONE_ASSET_PATH;
-      } /* Carlos: meteor dependency
-      else if (Meteor.isProduction || Meteor.isDevelopment) {
-        return path.join(rootPath, '../web.browser/app/');
-      }*/
+      }
       else {
         return path.join(rootPath);
       }
     }
   }
 
-  static getAssetSubfolder(newPath) {
+  static getAssetSubfolder(newPath: string) {
     return path.join(this.getAssetPath(), newPath);
   }
 
-  static getReferencePath(newPath) {
+  static getReferencePath(newPath: string) {
     return path.join('assets', path.normalize(path.relative(this.getAssetPath(), newPath)));
   }
 /* Carlos: remade to ignore meteor checks
@@ -140,18 +142,18 @@ export default class ServerUtils {
     return path.join(rootPath);
   }
 
-  static startsWith(fullString, startString) {
-    let str = (fullString || '').toLowerCase(),
+  static startsWith(fullString: string, startString: string) {
+    const str = (fullString || '').toLowerCase(),
       start = (startString || '').toLowerCase();
     return str.startsWith(start);
   }
 
-  static startsWithArray(fullString, startStringArray) {
-    let flag = false,
-         str = (fullString || '').toLowerCase();
+  static startsWithArray(fullString: string, startStringArray: string[]) {
+    let flag = false;
+    const str = (fullString || '').toLowerCase();
 
     startStringArray.forEach((el, idx, arr) => {
-      let start = (el || '').toLowerCase();
+      const start = (el || '').toLowerCase();
       if (str.startsWith(start)) flag = true;
     });
 

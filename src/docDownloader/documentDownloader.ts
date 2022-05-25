@@ -136,15 +136,14 @@ export class DocumentDownloader {
       if (!err && res) {
         indexedDocument.route = res.route;
 
-        const check = DocumentParser.cleanDocument(res.fullPath, indexedDocument.url);
-        const docInfo = DocumentParser.getDocumentInfo(res.fullPath);
+        DocumentParser.cleanDocument(res.fullPath, indexedDocument.url);
+        DocumentParser.getDocumentInfo(res.fullPath);
 
         // Carlos: original result, new uses mongoose
         //const result = Documents.upsert({ route: indexedDocument.route }, indexedDocument);
-        console.log("RUNNING findOneAndUpdate");
+        console.log("Saving document to database...");
         const result = await DocumentsModel.findOneAndUpdate({ route: indexedDocument.route }, indexedDocument, { new: true, upsert: true, rawResult: true });
-        console.log(result);
-        console.log("findOneAndUpdate SUCCESSFUL");
+        console.log("Done. Result:\n", result);
 
 
         const urlOrigin = new URL(docObj.url).origin.split('://')[1];
@@ -188,8 +187,8 @@ export class DocumentDownloader {
         // ok is 1 if there is no error
         if (result.ok === 1) {
 
-          DocumentsModel.findOne({ route: indexedDocument.route }).then((doc:any) => {
-            Indexer.indexDocumentAsync(doc, (err2: any, res2: any) => {
+          DocumentsModel.findOne({ route: indexedDocument.route }).then((doc) => {
+            Indexer.indexDocumentAsync(doc, (err2) => {
               if (!err2) {
                 callback(null, doc);  
               }
@@ -218,72 +217,60 @@ export class DocumentDownloader {
   // fetch() -> index() -> download()
   static fetch(docObj: IndexDocument, callback: any) {
     console.log('Attempting to download document!');
+    console.log('Document URL', docObj.url);
 
-    if (!Utils.isEmptyObject(docObj) && Utils.isString(docObj.docName) && Utils.isString(docObj.url)) {
-      console.log('Document URL', docObj.url);
+    DocumentDownloader.index(docObj, ((err: any, res: any) => {
+      if (!err) {
+        console.log('Document downloaded and indexed successfully!', docObj.url);
+        callback(null, res);
+      }
+      else {
+        callback(errorObj, null);
+      }
+    }));
 
-      DocumentDownloader.index(docObj, ((err: any, res: any) => {
-        if (!err) {
-          console.log('Document downloaded and indexed successfully!', docObj.url);
-          callback(null, res);
-        }
-        else {
-          callback(errorObj);
-        }
-      }));
-    }
-    else {
-      console.error('Document object is invalid!', docObj.url, errorObj);
-      callback(errorObj);
-    }
   }
 
   // preview() -> download()
   static preview(docObj: IndexDocument, callback: (error: any, document?: any) => void) {
     console.log('Attempting to preview document!');
+    console.log('Document URL', docObj.url);
 
-    if (!Utils.isEmptyObject(docObj) && Utils.isString(docObj.docName) && Utils.isString(docObj.url)) {
-      console.log('Document URL', docObj.url);
+    const document: IndexDocument = {
+      //_id: '<preview>',
+      docName: docObj.docName,
+      title: docObj.title || 'New NEURONE Page',
+      locale: docObj.locale || 'en',
+      relevant: docObj.relevant || false,
+      task: docObj.task || [ 'preview' ],
+      domain: docObj.domain || [ 'preview' ],
+      keywords: docObj.keywords || [],
+      date: docObj.date || Utils.getDate(),
+      url: docObj.maskedUrl || docObj.url || '',
+      searchSnippet: docObj.searchSnippet || '',
+      indexedBody: '',
+      // Carlos: added to fit new interface
+      route: '',
+      maskedUrl: '',
+      hash: '',
+    };
 
-      const document: IndexDocument = {
-        //_id: '<preview>',
-        docName: docObj.docName,
-        title: docObj.title || 'New NEURONE Page',
-        locale: docObj.locale || 'en',
-        relevant: docObj.relevant || false,
-        task: docObj.task || [ 'preview' ],
-        domain: docObj.domain || [ 'preview' ],
-        keywords: docObj.keywords || [],
-        date: docObj.date || Utils.getDate(),
-        url: docObj.maskedUrl || docObj.url || '',
-        searchSnippet: docObj.searchSnippet || '',
-        indexedBody: '',
-        // Carlos: added to fit new interface
-        route: '',
-        maskedUrl: '',
-        hash: '',
-      };
+    DocumentDownloader.download(docObj.docName, docObj.url, false, ((err, res) => {
+      // Carlos: added res check to avoid undefine TS conficts
+      if (!err && res) {
+        document.route = res.route;
 
-      DocumentDownloader.download(docObj.docName, docObj.url, false, ((err, res) => {
-        // Carlos: added res check to avoid undefine TS conficts
-        if (!err && res) {
-          document.route = res.route;
+        DocumentParser.cleanDocument(res.fullPath, document.url);
+        DocumentParser.getDocumentInfo(res.fullPath);
 
-          const check = DocumentParser.cleanDocument(res.fullPath, document.url);
-          const docInfo = DocumentParser.getDocumentInfo(res.fullPath);
+        console.log('Document downloaded for preview successfully!', docObj.url);
 
-          console.log('Document downloaded for preview successfully!', docObj.url);
-
-          callback(null, document);
-        }
-        else {
-          callback(errorObj);
-        }
-      }));
-    }
-    else {
-      console.error('Document object is invalid!', docObj.url, errorObj);
-      callback(errorObj);
-    }
+        callback(null, document);
+      }
+      else {
+        callback(errorObj);
+      }
+    }));
+    
   }
 }

@@ -13,10 +13,10 @@ const port = process.env.PORT || 3001;
 app.use(express.urlencoded({extended: true})); // Parse URL-encoded bodies
 app.use(express.json()); // TODO: add form data support
 app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS" );
-    next();
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS" );
+  next();
 });
 
 import download from './routes/download';
@@ -27,18 +27,6 @@ app.use(search);
 
 // expose in the localhost router to see files in browser
 app.use(express.static('assets'));
-
-/*
-// Load dependency
-import solr = require('solr-client');
-
-// Create a client
-const client = solr.createClient();
-
-// Add a new document
-client.add({ id : 12, title_t : 'Hello' })
-.then((obj:any) => {console.log('Solr response:', obj)});
-*/
 
 // Connect URL
 const url = 'mongodb://127.0.0.1:27017/test';
@@ -152,3 +140,6 @@ DocumentRetrieval.getDocument("api-test-ps4", (error: any, doc: any) => {
   console.log("\n\nDONE\n\n");
   console.log(doc);
 })*/
+/*
+DocumentRetrieval.searchDocument({query: "asd"});
+*/
