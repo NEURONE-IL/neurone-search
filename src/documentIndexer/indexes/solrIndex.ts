@@ -12,7 +12,7 @@ export default class SolrIndex {
   /**
    * starts up the solr index client with options in the env variables
    */
-  private static async load(reload?: boolean) {
+  static async load(reload?: boolean) {
 
     // simply return if the client is already loaded and it hasn't been asked to reaload
     if (this.client && !reload) {
@@ -53,9 +53,10 @@ export default class SolrIndex {
       }
     }
 
+    console.log("\n***Refreshing solr index from database***\n");
+
     let docs: IndexDocument[];
     try{
-      //const docs = Documents.find().fetch(); // Carlos: original neurone method
       docs = await DocumentsModel.find({});
     } catch (err) {
       console.error("Could not load documents from database.\n", err);
@@ -75,7 +76,6 @@ export default class SolrIndex {
     */
 
     docs.forEach((doc) => {
-      console.log(doc);
       // TODO: replace with indexDocument interface or create new interface
       const newDoc = {
         id: doc.docName,
@@ -93,20 +93,27 @@ export default class SolrIndex {
       };
       idxDocs.push(newDoc);
     });
-    
-    console.log('entering delete()...');
+
+
+    console.log("Found " + idxDocs.length + " documents in database.");
+    console.log('Deleting all documents currently in solr index... [solr-client delete()]');
     // dgacitua: Deleting old documents
     // Carlos: searchIndex from solr-node replaced with client from solr-client
 
     try {
-      const res = await this.client.delete('id', '*');
-      console.log("Deletion successful.\n", res);
-      console.log("Entering solr-client add()...");
+      const res = await this.client.deleteAll();
+      console.log("Deletion successful.\nDetails: ", res);
+      console.log("Adding documents to solr index... [solr-client add()]");
       const obj = await this.client.add(idxDocs);
-      console.log("Documents added to solr index successfully! Details:\n", obj);
+      console.log("Documents added to solr index successfully!\nDetails: ", obj);
+      console.log("Commiting changes... [solr-client commit()]");
+      await this.client.commit();
+      console.log("Changes commited!");
+      return;
 
     } catch (err) {
       console.error("Could not complete creation of new index.\n", err);
+      return;
     }
 
   }
@@ -143,21 +150,25 @@ export default class SolrIndex {
     try{
       await this.client.add([newDoc]);
       console.log("Document added successfully.");
+      await this.client.commit();
+      console.log("Index commited successfully.");
+      return null;
     } catch (err) {
       console.error("Error when indexing document:\n", err);
+      return err;
     }
   }
 
   /**
    * search using the parameters in the loaded solr index
-   * @param queryObject object with query info
+   * @param queryParam object with query info
    * @returns response from solr
    */
-  static async searchDocuments(queryObject: QueryObject) {
+  static async searchDocuments(queryParam: QueryObject) {
 
     // load client if it hasn't started up
     if (!this.client) {
-      try{
+      try {
         await this.load();
       } catch (err) {
         console.error("searchDocument(): could not load client.");
@@ -165,32 +176,79 @@ export default class SolrIndex {
       }
     }
 
-    const queryString = queryObject.query,
-          queryLocale = queryObject.locale ? queryObject.locale : null,
-          queryTask = queryObject.task ? queryObject.task : null,
-          queryDomain = queryObject.domain ? queryObject.domain : null;
+    const queryString = queryParam.query,
+          queryLocale = queryParam.locale ? queryParam.locale : null,
+          queryTask = queryParam.task ? queryParam.task : null,
+          queryDomain = queryParam.domain ? queryParam.domain : null;
+          
 
     // query string to be passed to solr
     const q1 = `(title_t:${queryString} OR indexedBody_t: ${queryString} OR keywords_t: ${queryString})`,
           q2 = queryLocale ? ` AND locale_s:${queryLocale}` : '',
           q3 = queryTask ? ` AND task_s:${queryTask}` : '',
-          q4 = queryDomain ? ` AND domain_s:${queryDomain}` : '',
-          q5 = `start=0&rows=100`,
-          q6 = `df=indexedBody_t`,
-          q7 = `hl=on&hl.q=${queryString}&hl.fl=indexedBody_t&hl.snippets=3&hl.simple.pre=<em class="hl">&hl.simple.post=</em>`,
-          q8 = `hl.fragmenter=regex&hl.regex.slop=0.2&hl.alternateField=body_t&hl.maxAlternateFieldLength=300`,
-       query = `(${q1}${q2}${q3}${q4})&${q5}&${q6}&${q7}&${q8}`;
+          q4 = queryDomain ? ` AND domain_s:${queryDomain}` : '';
+    const mainQuery = `(${q1}${q2}${q3}${q4})`;
 
-    // query to solr
-    const queryObj = this.client.query().q(query);
+    // create main query object
+    const query = this.client.query();
+
+    // set the main query
+    query.q(mainQuery);
+
+    // query start
+    query.start(0);
+
+    // query rows
+    query.rows(100);
+
+    // query default field
+    query.df("indexedBody_t");
+
+    // query highlighting
+    query.hl({
+      on: true,
+      q: queryString,
+      fl: "indexedBody_t",
+      snippets: 3,
+      simplePre: "<em class=\"hl\">",
+      simplePost: "</em>",
+      fragmenter: "regex",
+      regexSlop: 0.2,
+      alternateField: "body_t",
+      maxAlternateFieldLength: 300
+    });
+
+    console.log(query);
     try {
-      const res = await this.client.search(queryObj);
-      console.log("queryObject:", res);
+      const res = await this.client.search(query);
+      console.log("RESPONSE:\n", res);
+      //console.log("DOCS:\n", res.response.docs);
+      // Carlos: highlighting not standard in SearchResponse<unknown> so "res" has to be declared as any to see
+      //console.log("HIGHLIGHT:\n", res.highlighting);
       return res;
+
     } catch(err) {
       console.error(err);
       return;
     }
+
+  }
+
+  /**
+   * returns all documents in solr index
+   */
+  static async searchAllDocuments() {
+    // load client if it hasn't started up
+    if (!this.client) {
+      try {
+        await this.load();
+      } catch (err) {
+        console.error("searchAllDocuments(): could not load client.");
+        return;
+      }
+    }
+
+    return await this.client.searchAll();
 
   }
 

@@ -1,5 +1,6 @@
 import express from 'express';
 import DocumentRetrieval from '../documentIndexer/documentRetrieval';
+import { QueryObject } from '../interfaces/queryInterface';
 
 
 const router = express.Router();
@@ -7,7 +8,15 @@ const router = express.Router();
 // execute search query
 router.get('/search/:query', async (req, res) => {
   try {
-    const documents = await DocumentRetrieval.searchDocument({query: req.params.query});
+
+    const query: QueryObject = {
+      query: req.params.query,
+      locale: req.body.locale ? req.body.locale : null,
+      task: req.body.task ? req.body.task : null,
+      domain: req.body.domain ? req.body.domain : null
+    }
+
+    const documents = await DocumentRetrieval.searchDocument(query);
     res.status(200).json({result: documents});
   } catch (err) {
     console.error("Error in API /search: \n", err);

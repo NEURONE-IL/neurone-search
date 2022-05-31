@@ -154,8 +154,10 @@ export default class DocumentRetrieval {
     if (Indexer.checkSolrIndex()) {
       const res = await SolrIndex.searchDocuments(queryObj);
 
-      if (res && res.response.docs.length >= 1) 
-        return this.iFuCoSort(res.response.docs, 3, 2);
+      if (res && res.response.docs.length >= 1){ 
+        res.response.docs = this.iFuCoSort(res.response.docs, 3, 2);
+        return res;
+      }
       else 
         return res;
     }/*
