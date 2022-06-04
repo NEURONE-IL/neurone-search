@@ -33,7 +33,7 @@ router.post('/download', (req, res) => {
         if(!err){      
           console.log('FETCH IS DONE');
           console.log(result);
-          res.status(200).json({message: "Successful", result: result});
+          res.status(201).json({message: "Successful", result: result});
         }
         else {
           console.error("Error in downloader API (post):\n", err);

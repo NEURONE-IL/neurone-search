@@ -98,8 +98,7 @@ export default class DocumentParser {
           fileDir = path.dirname(relPath),
           fileExt = path.extname(relPath),
          fileName = path.basename(relPath, fileExt),
-      newFilename = fileName + fileExt,
-       pageDomain = this.getDomainUrl(originUrl);
+      newFilename = fileName + fileExt;
 
       const htmlFile = this.readFile(relPath),
         htmlString = htmlFile.toString(),
@@ -267,7 +266,7 @@ export default class DocumentParser {
       */
     }
     catch (e) {
-      console.error(e);
+      console.error("Error while downloading document:\n", e);
       return false;
     }
   }
@@ -324,27 +323,14 @@ export default class DocumentParser {
     }
   }
 
-  static getDocumentInfo(documentPath: string) {
-    const obj: IndexDocument = {
-      //_id: '',
-      title: this.getHtmlTitle(documentPath),
-      indexedBody: this.getHtmlAsText(documentPath),
-      date: (new Date()).toString(), // Carlos: changed to be used from here and not serverUtils
-      docName: this.getHtmlDocname(documentPath),
-      route: this.getHtmlRoute(documentPath),
-      hash: this.getHash(documentPath),
-      // Carlos: added to fit new obj interface
-      locale: '',
-      relevant: undefined,
-      task: [],
-      domain: [],
-      keywords: [],
-      url: '',
-      maskedUrl: '',
-      searchSnippet: ['']
-    };
+  static getDocumentInfo(documentPath: string, documentToUpdate: IndexDocument) {
+
+    documentToUpdate.title = documentToUpdate.title === '' ? this.getHtmlTitle(documentPath) : documentToUpdate.title;
+    documentToUpdate.indexedBody = this.getHtmlAsText(documentPath);
+    documentToUpdate.hash = this.getHash(documentPath);
+    //documentToUpdate: (new Date()).toString(), // Carlos: changed to be used from here and not serverUtils // TODO: ask if this format is correct
 
     //console.log('Document Parsed!', obj.route);
-    return obj;
+    return documentToUpdate;
   }
 }

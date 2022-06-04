@@ -4,10 +4,46 @@ import { SolrClientParams, Client } from 'solr-client';
 import { DocumentsModel } from '../../models/document';
 import { IndexDocument } from '../../interfaces/indexDocInterface';
 import { QueryObject } from '../../interfaces/queryInterface';
+import { docInsideIndex } from '../../interfaces/docInsideIndexInterface';
 
 export default class SolrIndex {
 
   static client: Client;
+
+  /**
+   * maps a db document into a index document for consistency and returns the object
+   * @param doc document from database
+   * @param customOptions overrides field from db document
+   * @returns document for the index
+   */
+  private static mapDbDocToIndexDoc(
+    doc: IndexDocument, 
+    customOptions?: {
+      relevant: boolean,
+      title: string,
+      searchSnippet: string[],
+      indexedBody: string,
+      keywords: string[],
+      task: string, // TODO: Change to string array
+      domain: string[],
+      url: string
+      }): docInsideIndex {
+
+    return {
+      id: doc.docName,
+      docId_s: doc._id,
+      locale_s: doc.locale,
+      relevant_b: customOptions?.relevant || doc.relevant || false,
+      title_t: customOptions?.title || doc.title || '',
+      searchSnippet_t: customOptions?.searchSnippet || doc.searchSnippet || [], // Carlos: changed '' to []
+      indexedBody_t: customOptions?.indexedBody || doc.indexedBody || '',
+      keywords_t: customOptions?.keywords ||  doc.keywords || [],
+      task_s: customOptions?.task || doc.task[0] || '', // TODO: change to string array
+      domain_s: customOptions?.domain || doc.domain || [],
+      url_t: customOptions?.url || doc.url || ''
+      //type_t: doc.type || ' // TODO: implement type
+    }
+  }
 
   /**
    * starts up the solr index client with options in the env variables
@@ -30,10 +66,12 @@ export default class SolrIndex {
     this.client = solr.createClient(options);
 
     try {
-      const mess = await this.client.ping()
+      const mes = await this.client.ping()
       console.log("Loaded successfully! ");
-      console.log(mess);
-      // callback("Loaded successfully", false);
+      console.log(mes);
+      
+      //const schemaRes = await this.client.createSchemaField("task_s", "strings");
+      //console.log("SCHEMA CREATED:\n", schemaRes);
     } catch (err) {
       console.error("Error in load method:\n", err);
     }
@@ -77,20 +115,7 @@ export default class SolrIndex {
 
     docs.forEach((doc) => {
       // TODO: replace with indexDocument interface or create new interface
-      const newDoc = {
-        id: doc.docName,
-        docId_s: doc._id,
-        locale_s: doc.locale,
-        relevant_b: doc.relevant || false,
-        title_t: doc.title || '',
-        searchSnippet_t: doc.searchSnippet || [], // Carlos: changed '' to []
-        indexedBody_t: doc.indexedBody || '',
-        keywords_t: doc.keywords || [],
-        task_s: doc.task || [],
-        domain_s: doc.domain || [],
-        url_t: doc.url || ''
-        //type_t: doc.type || 'page' // TODO: is this to differentiate pages, books, videos, imgs?
-      };
+      const newDoc = this.mapDbDocToIndexDoc(doc);
       idxDocs.push(newDoc);
     });
 
@@ -132,20 +157,7 @@ export default class SolrIndex {
       return;
     }
 
-    const newDoc = {
-      id: doc._id,
-      docId_s: doc._id,
-      locale_s: doc.locale,
-      relevant_b: doc.relevant || false,
-      title_t: doc.title || '',
-      searchSnippet_t: doc.searchSnippet || [], // Carlos: changed '' to []
-      indexedBody_t: doc.indexedBody || '',
-      keywords_t: doc.keywords || [],
-      task_s: doc.task || [],
-      domain_s: doc.domain || [],
-      url_t: doc.url || '',
-      type_t: /*doc.type ||*/ 'page' // TODO: check or ask what it 'type'
-    };
+    const newDoc = this.mapDbDocToIndexDoc(doc);
 
     try{
       await this.client.add([newDoc]);
@@ -210,8 +222,8 @@ export default class SolrIndex {
       q: queryString,
       fl: "indexedBody_t",
       snippets: 3,
-      simplePre: "<em class=\"hl\">",
-      simplePost: "</em>",
+      simplePre: "<b class=\"hl\">",
+      simplePost: "</b>",
       fragmenter: "regex",
       regexSlop: 0.2,
       alternateField: "body_t",
@@ -220,11 +232,33 @@ export default class SolrIndex {
 
     console.log(query);
     try {
-      const res = await this.client.search(query);
+
+      const res: any = await this.client.search(query);
       console.log("RESPONSE:\n", res);
       //console.log("DOCS:\n", res.response.docs);
-      // Carlos: highlighting not standard in SearchResponse<unknown> so "res" has to be declared as any to see
       //console.log("HIGHLIGHT:\n", res.highlighting);
+
+      // add the highlights to the res in a cleaner way, each key will be an object id and the values are string arrays with the hls
+      const highlights: any = {};
+      for (const key in res.highlighting){
+        highlights[key] = res.highlighting[key]["indexedBody_t"] ? res.highlighting[key]["indexedBody_t"] : []; // "?" avoids saving undefined
+        // add "..." to separate the strings more cleanly
+        for (const hl in highlights[key] ){
+          highlights[key][hl] = highlights[key][hl] + "... ";
+        }
+      }
+
+      res.highlighting = highlights;
+      
+      res.route = {};
+      // we find the route of the downloaded html file here, and add its id from the db as a key in the object (similar to highlights)
+      for (const indexDoc of res.response.docs) {
+        const dbDoc = await DocumentsModel.find({'docName': indexDoc.id}, "route").exec();
+
+        // we add the route to the response, should be unique since docName is unique in the collection
+        res.route[indexDoc.id] = dbDoc[0].route;
+      }
+
       return res;
 
     } catch(err) {

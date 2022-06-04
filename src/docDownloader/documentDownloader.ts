@@ -20,11 +20,11 @@ const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 
 const errorObj = { msg: 'ERROR!' };
 
 // dgacitua: Paths for indexable documents
-const dirName = path.join('assets', 'downloadedDocs');
+const dirName = path.join('downloadedDocs');
 const downloadDir = path.join(Utils.getAssetPath(), 'downloadedDocs');
 
 // dgacitua: Paths for preview documents
-const previewName = path.join('assets', 'previewDocs');
+const previewName = path.join('previewDocs');
 const previewDir = path.join(Utils.getAssetPath(), 'previewDocs');
 
 // Carlos: moved from middle of class
@@ -113,10 +113,9 @@ export class DocumentDownloader {
 
   // dgacitua: Download and index downloaded document
   static index(docObj: IndexDocument, callback: any) {
-    const indexedDocument: IndexDocument = { 
+    let indexedDocument: IndexDocument = { 
       docName: docObj.docName,
-      
-      title: docObj.title || 'New NEURONE Page',
+      title: docObj.title || '',
       locale: docObj.locale || 'en',
       relevant: docObj.relevant || false,
       task: docObj.task || [ 'pilot' ],
@@ -135,9 +134,13 @@ export class DocumentDownloader {
       // Carlos: agregada verificación de existencia de res para evitar posibles conflictos con "undefined" en TS
       if (!err && res) {
         indexedDocument.route = res.route;
+        console.log("FULL PATHL\n", res.fullPath);
 
-        DocumentParser.cleanDocument(res.fullPath, indexedDocument.url);
-        DocumentParser.getDocumentInfo(res.fullPath);
+        if(!DocumentParser.cleanDocument(res.fullPath, indexedDocument.url)){
+          console.error("WARNING: Document " + res.fullPath + " has NOT been cleaned properly, it might have scripts, links and other things still active.");
+        }
+        indexedDocument = DocumentParser.getDocumentInfo(res.fullPath, indexedDocument);
+
 
         // Carlos: original result, new uses mongoose
         //const result = Documents.upsert({ route: indexedDocument.route }, indexedDocument);
@@ -236,7 +239,7 @@ export class DocumentDownloader {
     console.log('Attempting to preview document!');
     console.log('Document URL', docObj.url);
 
-    const document: IndexDocument = {
+    let document: IndexDocument = {
       //_id: '<preview>',
       docName: docObj.docName,
       title: docObj.title || 'New NEURONE Page',
@@ -256,12 +259,13 @@ export class DocumentDownloader {
     };
 
     DocumentDownloader.download(docObj.docName, docObj.url, false, ((err, res) => {
-      // Carlos: added res check to avoid undefine TS conficts
       if (!err && res) {
         document.route = res.route;
 
-        DocumentParser.cleanDocument(res.fullPath, document.url);
-        DocumentParser.getDocumentInfo(res.fullPath);
+        if (!DocumentParser.cleanDocument(res.fullPath, document.url)){
+          console.error("WARNING: Document " + res.fullPath + " has NOT been cleaned properly, it might have scripts, links and other things still active.");
+        }
+        document = DocumentParser.getDocumentInfo(res.fullPath, document);
 
         console.log('Document downloaded for preview successfully!', docObj.url);
 

@@ -16,15 +16,21 @@ router.get('/search/:query', async (req, res) => {
       domain: req.body.domain ? req.body.domain : null
     }
 
-    const documents = await DocumentRetrieval.searchDocument(query);
-    res.status(200).json({result: documents});
+    const response = await DocumentRetrieval.searchDocument(query);
+    // trim indexed body to save bandwidth, it's a large string
+    for (const key of response.response.docs) {
+      if (key.indexedBody_t.length > 100){
+        key.indexedBody_t = key.indexedBody_t.slice(0, 100) + "... (text too long)";
+      }
+    }
+    res.status(200).json({result: response});
   } catch (err) {
     console.error("Error in API /search: \n", err);
     res.status(500).json({message: "Error executing the query."});
   }
 });
 
-// get one document
+// get one document from index, highlights and downloaded files routes are part of the object
 router.get('/document/:docName', async (req, res) => {
   try {
     const document = await DocumentRetrieval.getDocument(req.params.docName);
@@ -35,11 +41,20 @@ router.get('/document/:docName', async (req, res) => {
   }
 });
 
-// get all documents
+// get all documents from database, indexed body removed
 router.get('/document', async (req, res) => {
   try {
-    const docs = await DocumentRetrieval.listAllDocuments();
-    res.status(200).json({documents: docs});
+    const response = await DocumentRetrieval.listAllDocuments();
+    if (response){
+      // trim indexed body to save bandwidth, it's a large string
+      for (const item of response){
+        if (item.indexedBody.length > 100){
+          item.indexedBody = item.indexedBody.slice(0, 100) + "... (text too long)";
+        }
+      }
+    }
+    //console.log(response);
+    res.status(200).json({documents: response});
   } catch (err) {
     console.error("Error getting all documents:\n", err);
     res.status(500).json({message: "Error getting all documents."});

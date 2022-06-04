@@ -136,6 +136,14 @@ try {
 }
 */
 /*
+SolrIndex.searchAllDocuments().then((alldocs) => {
+  console.log(alldocs?.response.docs);
+})
+*/
+
+//SolrIndex.searchAllDocuments().then((res:any) => {console.log(res.response.docs)});
+
+/*
 DocumentRetrieval.getDocument("api-test-ps4", (error: any, doc: any) => {
   console.log("\n\nDONE\n\n");
   console.log(doc);
