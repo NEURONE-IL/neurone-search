@@ -8,7 +8,7 @@ import { IndexDocument } from '../interfaces/indexDocInterface';
 export default class Indexer {
 
   static checkSolrIndex() {
-    return (!!process.env.NEURONE_SOLR_HOST && !!process.env.NEURONE_SOLR_PORT && !!process.env.NEURONE_SOLR_CORE);
+    return (process.env.NEURONE_SOLR_HOST && process.env.NEURONE_SOLR_PORT && process.env.NEURONE_SOLR_CORE);
   }
 
   // TODO: unnecesary under new structure?

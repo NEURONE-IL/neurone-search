@@ -85,10 +85,10 @@ export class DocumentDownloader {
 
     fs.remove(downloadPath, (err) => {
       if (!err) {
-        console.log("BEGIN SCRAPE")
+        console.log("Starting website download...")
         scrape(options, (err2, res2) => {
           if (!err2) {
-            console.log("SCRAPE COMPLETE, ENTERING CALLBACK");
+            console.log("Download complete.");
             const response = {
               docName: docName,
               pageUrl: res2 ? res2[0].url : '', // Carlos: added null ckeck

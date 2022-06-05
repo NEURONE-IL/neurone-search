@@ -7,11 +7,10 @@ const router = express.Router();
 
 // download, save in db and index automatically rquested document, send back saved object in database
 router.post('/download', (req, res) => {
-  console.log("URL!!!!!!!!!!!!: ", req.body.url);
 
   const indexedDocument: IndexDocument = { 
     docName: req.body.docName || 'no-name-provided',
-    title: req.body.title || 'New NEURONE Page',
+    title: req.body.title,
     locale: req.body.locale || 'en',
     relevant: req.body.relevant || false,
     task: req.body.task || [ 'pilot' ],

@@ -207,11 +207,11 @@ export default class SolrIndex {
     // set the main query
     query.q(mainQuery);
 
-    // query start
-    query.start(0);
+    // query start (calculated offset for pagination)
+    query.start(queryParam.page * queryParam.docAmount);
 
     // query rows
-    query.rows(100);
+    query.rows(queryParam.docAmount);
 
     // query default field
     query.df("indexedBody_t");
@@ -242,10 +242,6 @@ export default class SolrIndex {
       const highlights: any = {};
       for (const key in res.highlighting){
         highlights[key] = res.highlighting[key]["indexedBody_t"] ? res.highlighting[key]["indexedBody_t"] : []; // "?" avoids saving undefined
-        // add "..." to separate the strings more cleanly
-        for (const hl in highlights[key] ){
-          highlights[key][hl] = highlights[key][hl] + "... ";
-        }
       }
 
       res.highlighting = highlights;
@@ -259,6 +255,10 @@ export default class SolrIndex {
         res.route[indexDoc.id] = dbDoc[0].route;
       }
 
+      console.log("QUERY PAGES:");
+      console.log(queryParam.page);
+      console.log("QUERY AMOUNT:")
+      console.log(queryParam.docAmount);
       return res;
 
     } catch(err) {
