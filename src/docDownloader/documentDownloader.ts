@@ -277,4 +277,42 @@ export class DocumentDownloader {
     }));
     
   }
+
+  /**
+   * deletes the document in the database and its linked folder with webpage in local storage
+   * @param docName name of the document in the database and folder name
+   * @returns report of deletion of document in database and folder in local storage
+   */
+  static async delete(docName: string) {
+
+    const log: string[] = [];
+
+    // delete from database
+    console.log("Deleting document: " + docName + "...");
+    try {
+      const deletedRes = await DocumentsModel.deleteOne({docName: docName});
+      if (deletedRes.deletedCount === 1) {
+        console.log("Deleted Successfully from database.");
+        log.push("Deleted Successfully from database.");
+      } else if (deletedRes.deletedCount === 0) {
+        log.push("Document not found in database.")
+        console.log("Document not found in database.");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // delete from folders
+    console.log("Deleting folder with webpage: " + docName);
+    try {
+      fs.rmSync((process.env.NEURONE_ASSET_PATH + "/" || "./assets/") + dirName  + "/" + docName, {recursive: true} );
+      console.log("Deleted successfully");
+      log.push("Webpage deleted successfully from local storage.");
+    } catch (err) {
+      console.error("Error when deleting folder " + docName + "\n", err);
+      log.push("Could not delete folder with webpage in storage. It may not exist.");
+    }
+    
+    return log;
+  }
 }

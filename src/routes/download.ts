@@ -90,4 +90,15 @@ router.get('/download/preview', (req, res) => {
   }
 });
 
+// delete a webpage, this is, delete it from the database then delete the local folder containing it
+router.delete('/download/delete/:docName', async (req, res) => {
+  try {
+    const deleteLog = await DocumentDownloader.delete(req.params.docName);
+    res.status(200).json({message: deleteLog});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({message: "Error when deleting document."});
+  }
+});
+
 export default router;

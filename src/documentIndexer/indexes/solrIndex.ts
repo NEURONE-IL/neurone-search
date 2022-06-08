@@ -222,8 +222,8 @@ export default class SolrIndex {
       q: queryString,
       fl: "indexedBody_t",
       snippets: 3,
-      simplePre: "<b class=\"hl\">",
-      simplePost: "</b>",
+      simplePre: "<em class=\"hl\">",
+      simplePost: "</em>",
       fragmenter: "regex",
       regexSlop: 0.2,
       alternateField: "body_t",
@@ -262,8 +262,8 @@ export default class SolrIndex {
       return res;
 
     } catch(err) {
-      console.error(err);
-      return;
+      console.error("Error while processing search request. Try reindexing with reindex() in Document Retrieval file.\n", err);
+      return {response: {}};
     }
 
   }

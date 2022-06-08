@@ -25,7 +25,7 @@ router.get('/search/:query/:page?/:amount?', async (req, res) => {
   try {
 
     // make sure that page and amount are number types properly, and assign a default value in case they aren't in the route
-    let page = 1
+    let page = 0;
     let amount = 10;
     if (req.params.page){
       page = parseNumberOrUseDefault(req.params.page, page);
