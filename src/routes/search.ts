@@ -80,7 +80,7 @@ router.get('/document', async (req, res) => {
         }
       }
     }
-    //console.log(response);
+    
     res.status(200).json({documents: response});
   } catch (err) {
     console.error("Error getting all documents:\n", err);

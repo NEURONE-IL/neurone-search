@@ -50,7 +50,7 @@ export default class Indexer {
     }
   }
 
-  static async indexDocumentAsync(docObj: IndexDocument, callback: (arg0: any, arg1: any) => void) {
+  static async indexDocumentAsync(docObj: IndexDocument, callback: (arg0: unknown, arg1: unknown) => void) {
     if (Indexer.checkSolrIndex()) {
       const error = await SolrIndex.index(docObj);
       callback(error, true);

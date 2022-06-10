@@ -118,8 +118,8 @@ export class DocumentDownloader {
       title: docObj.title || '',
       locale: docObj.locale || 'en',
       relevant: docObj.relevant || false,
-      task: docObj.task || [ 'pilot' ],
-      domain: docObj.domain || [ 'pilot' ],
+      task: docObj.task || 'pilot',
+      domain: docObj.domain || 'pilot',
       keywords: docObj.keywords || [],
       date: docObj.date || Utils.getDate(),
       maskedUrl: docObj.maskedUrl,
@@ -134,18 +134,23 @@ export class DocumentDownloader {
       // Carlos: agregada verificación de existencia de res para evitar posibles conflictos con "undefined" en TS
       if (!err && res) {
         indexedDocument.route = res.route;
-        console.log("FULL PATHL\n", res.fullPath);
+        console.log("FULL PATH\n", res.fullPath);
 
         if(!DocumentParser.cleanDocument(res.fullPath, indexedDocument.url)){
           console.error("WARNING: Document " + res.fullPath + " has NOT been cleaned properly, it might have scripts, links and other things still active.");
         }
         indexedDocument = DocumentParser.getDocumentInfo(res.fullPath, indexedDocument);
 
-
-        // Carlos: original result, new uses mongoose
-        //const result = Documents.upsert({ route: indexedDocument.route }, indexedDocument);
+        // save to database
         console.log("Saving document to database...");
-        const result = await DocumentsModel.findOneAndUpdate({ route: indexedDocument.route }, indexedDocument, { new: true, upsert: true, rawResult: true });
+        let result;
+        try {
+          result = await DocumentsModel.findOneAndUpdate({ route: indexedDocument.route }, indexedDocument, { new: true, upsert: true, rawResult: true });
+        } catch (err) {
+          console.error("Error saving document to database:\n", err);
+          callback(err, null);
+          return;
+        }
         console.log("Done. Result:\n", result);
 
 
@@ -245,8 +250,8 @@ export class DocumentDownloader {
       title: docObj.title || 'New NEURONE Page',
       locale: docObj.locale || 'en',
       relevant: docObj.relevant || false,
-      task: docObj.task || [ 'preview' ],
-      domain: docObj.domain || [ 'preview' ],
+      task: docObj.task || 'preview',
+      domain: docObj.domain || 'preview',
       keywords: docObj.keywords || [],
       date: docObj.date || Utils.getDate(),
       url: docObj.maskedUrl || docObj.url || '',

@@ -24,8 +24,8 @@ export default class SolrIndex {
       searchSnippet: string[],
       indexedBody: string,
       keywords: string[],
-      task: string, // TODO: Change to string array
-      domain: string[],
+      task: string,
+      domain: string,
       url: string
       }): docInsideIndex {
 
@@ -38,8 +38,8 @@ export default class SolrIndex {
       searchSnippet_t: customOptions?.searchSnippet || doc.searchSnippet || [], // Carlos: changed '' to []
       indexedBody_t: customOptions?.indexedBody || doc.indexedBody || '',
       keywords_t: customOptions?.keywords ||  doc.keywords || [],
-      task_s: customOptions?.task || doc.task[0] || '', // TODO: change to string array
-      domain_s: customOptions?.domain || doc.domain || [],
+      task_s: customOptions?.task || doc.task || '',
+      domain_s: customOptions?.domain || doc.domain || '',
       url_t: customOptions?.url || doc.url || ''
       //type_t: doc.type || ' // TODO: implement type
     }
@@ -230,16 +230,19 @@ export default class SolrIndex {
       maxAlternateFieldLength: 300
     });
 
-    console.log(query);
     try {
 
-      const res: any = await this.client.search(query);
-      console.log("RESPONSE:\n", res);
+      console.log("Executing query: " + queryParam.query);
+      console.log("Details: \n", query.parameters);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res: any = await this.client.search(query); // any type because saerch response is inconsistent 
+
+      //console.log("RESPONSE:\n", res);
       //console.log("DOCS:\n", res.response.docs);
       //console.log("HIGHLIGHT:\n", res.highlighting);
 
       // add the highlights to the res in a cleaner way, each key will be an object id and the values are string arrays with the hls
-      const highlights: any = {};
+      const highlights: Record<string, string[]> = {}
       for (const key in res.highlighting){
         highlights[key] = res.highlighting[key]["indexedBody_t"] ? res.highlighting[key]["indexedBody_t"] : []; // "?" avoids saving undefined
       }
@@ -255,10 +258,8 @@ export default class SolrIndex {
         res.route[indexDoc.id] = dbDoc[0].route;
       }
 
-      console.log("QUERY PAGES:");
-      console.log(queryParam.page);
-      console.log("QUERY AMOUNT:")
-      console.log(queryParam.docAmount);
+      console.log("Final response:\n", res);
+
       return res;
 
     } catch(err) {
