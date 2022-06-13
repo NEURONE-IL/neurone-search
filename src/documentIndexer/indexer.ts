@@ -15,7 +15,7 @@ export default class Indexer {
   static loadInvertedIndex() {
     try {
       if (Indexer.checkSolrIndex()) {
-        //SolrIndex.load(); // TODO: check if it's fixed with new solr implementation
+        //SolrIndex.load();
         
 
         return true;
@@ -34,13 +34,11 @@ export default class Indexer {
   static generateInvertedIndex() {
     try {
       if (Indexer.checkSolrIndex()) {
-        SolrIndex.generate(); // TODO: check if new solr implementation works
-        // const res = fn(); // Carlos: unused?
-
+        SolrIndex.generate();
         return true;
       }
       else {
-        //LunrIndex.generate();
+        //LunrIndex.generate(); // TODO
         return true;
       }
     }

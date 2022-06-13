@@ -92,7 +92,7 @@ export default class DocumentParser {
     }
   }
 
-  static cleanDocument(documentPath: string, originUrl: string) {
+  static cleanDocument(documentPath: string) {
     try {
       const relPath = documentPath,
           fileDir = path.dirname(relPath),
@@ -101,82 +101,53 @@ export default class DocumentParser {
       newFilename = fileName + fileExt;
 
       const htmlFile = this.readFile(relPath),
-        htmlString = htmlFile.toString(),
                  $ = load(htmlFile);
 
-      const parseClass = (classValue: string) => { return classValue.split(' ') };
-      
-      // dgacitua: Remove all elements with ad-like ids
-      /*
-      $('div[id],aside[id],section[id]').each((i, elem) => {
-        blockedIds.some((id) => {
-          if (!!id && $(elem).is(`#${id}`)) {
-            console.log('blockedid', id);
-            $(elem).remove();
-            return true;
-          }
-        });          
-      });
-      */
-      
-      // dgacitua: Remove all elements with ad-like classes
-      /*
-      $('div[class],aside[class],section[class]').each((i, elem) => {
-        blockedClasses.some((className) => {
-          if (!!className && $(elem).is(`.${className}`)) {
-            console.log('blockedclass', className);
-            $(elem).remove();
-            return true;
-          }
-        });
-      });
-      */
-
       // dgacitua: Remove onclick attribute from anchor tags
-      $('a').each((_i: any, elem: any) => {
+      $('a').each((i: any, elem: any) => {
         $(elem).removeAttr('onclick');
       });
 
       // dgacitua: Remove all external links
-      $('a[href]').each((i: any, elem: any) => {
+      $('a[href]').each((_i, elem: any) => {
         $(elem).attr('href', 'javascript:void(0)');
         $(elem).removeAttr('target');
       });
 
       // dgacitua: Remove all iframes and frames
-      $('iframe,frame').each((i: any, elem: any) => {
+      $('iframe,frame').each((_i, elem: any) => {
         $(elem).remove();
       });
 
       // dgacitua: Remove javascript
-      $('script').each((i: any, elem: any) => {
+      $('script').each((_i, elem: any) => {
         $(elem).remove();
       });
 
       // dgacitua: Remove onclick attribute from all tags
-      $('[onclick]').each((i: any, elem: any) => {
+      $('[onclick]').each((_i, elem: any) => {
         $(elem).removeAttr('onclick');
       });
 
       // dgacitua: Disable input elements
-      $('input').each((i: any, elem: any) => {
+      $('input').each((_i, elem: any) => {
         $(elem).removeAttr('id');
         $(elem).attr('disabled', 'true');
       });
 
       // dgacitua: Disable button elements
-      $('button').each((i: any, elem: any) => {
+      $('button').each((_i, elem: any) => {
         $(elem).removeAttr('id');
         $(elem).attr('disabled', 'true');
       });
 
       // dgacitua: Disable submit
-      $('[type="submit"]').each((i: any, elem: any) => {
+      $('[type="submit"]').each((_i, elem: any) => {
         $(elem).removeAttr('type');
       });
 
       // dgacitua: Disable form action
-      $('form').each((i: any, elem: any) => {
+      $('form').each((_i, elem: any) => {
         $(elem).removeAttr('action');
         $(elem).removeAttr('method');
       });
@@ -187,83 +158,6 @@ export default class DocumentParser {
     
       return true;
 
-      /*
-      const blockedIds = [ 'disqus', 'taboola', 'cresta', 'pubexchange', 'newsletter', 'sociales' ];
-      const blockedClasses = [ 'share', 'entry-share', 'textwidget', 'widget_ad', 'fb-comments', 'fb-social-plugin', 'fb-login-button', 'fb_iframe_widget', 'leikiwidget' ];
-      const blockedElements = [ 'iframe', 'object' ];
-      const adRemover = (elem) => {
-        // dgacitua: Remove all onclick events
-        $(elem).removeAttr('onclick');
-        
-        // dgacitua: Minimal ad filter by div id
-        if (Utils.startsWithArray($(elem).attr('id'), blockedIds)) {
-          $(elem).remove();
-          return true;
-        }
-        // dgacitua: Minimal ad filter by div class
-        blockedClasses.some((el, idx, arr) => {
-          if ($(elem).is(`.${el}`)) {
-            $(elem).remove();
-            return true;
-          }
-        });
-        return false;
-      };
-      const specialElementsRemover = (elementArray) => {
-        elementArray.forEach((el, idx, arr) => {
-          $(el).each((i, elem) => { $(elem).remove() });
-        });
-      };
-      specialElementsRemover(blockedElements);
-      
-      // dgacitua: Remove onclick attribute from anchor tags
-      $('a').each((i, elem) => {
-        $(elem).removeAttr('onclick');
-      });
-      // dgacitua: Remove all external links
-      $('a[href]').each((i, elem) => {
-        $(elem).attr('href', 'javascript:void(0)');
-        $(elem).removeAttr('target');
-      });
-      $('div').each((i, elem) => { adRemover(elem) });
-      $('aside').each((i, elem) => { adRemover(elem) });
-      $('p script').each((i, elem) => {
-        if ($(elem).attr('type') === 'text/javascript') {
-          $(elem).remove();
-        }
-      });
-      $('select').each((i, elem) => {
-        $(elem).removeAttr('id');
-        $(elem).removeAttr('onchange');
-      });
-      // dgacitua: Remove javascript
-      $('script').each((i, elem) => {
-        $(elem).removeAttr('src');
-        // if ($(elem).attr('type') === 'text/javascript' || $(elem).attr('type') === 'application/javascript') $(elem).remove();
-      });
-      // dgacitua: Disable input elements
-      $('input').each((i, elem) => {
-        $(elem).removeAttr('id');
-        $(elem).attr('disabled', 'true');
-      });
-      // dgacitua: Disable button elements
-      $('button').each((i, elem) => {
-        $(elem).removeAttr('id');
-        $(elem).attr('disabled', 'true');
-      });
-      // dgacitua: Disable submit
-      $('input[type="submit"]').each((i, elem) => {
-        $(elem).removeAttr('type');
-      });
-      $('button[type="submit"]').each((i, elem) => {
-        $(elem).removeAttr('type');
-      });
-      // dgacitua: Disable form action
-      $('form').each((i, elem) => {
-        $(elem).removeAttr('action');
-        $(elem).removeAttr('method');
-      });
-      */
     }
     catch (e) {
       console.error("Error while downloading document:\n", e);
@@ -328,7 +222,7 @@ export default class DocumentParser {
     documentToUpdate.title = documentToUpdate.title === '' ? this.getHtmlTitle(documentPath) : documentToUpdate.title;
     documentToUpdate.indexedBody = this.getHtmlAsText(documentPath);
     documentToUpdate.hash = this.getHash(documentPath);
-    //documentToUpdate: (new Date()).toString(), // Carlos: changed to be used from here and not serverUtils // TODO: ask if this format is correct
+    documentToUpdate.date = (new Date()).toString();
 
     //console.log('Document Parsed!', obj.route);
     return documentToUpdate;

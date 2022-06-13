@@ -67,7 +67,7 @@ export class DocumentDownloader {
       directory: downloadPath,
       filenameGenerator: 'bySiteStructure', //'byType',
       recursive: false,
-      httpResponseHandler: (response: { headers: { [x: string]: string; }; body: any; }) => {
+      httpResponseHandler: (response: { headers: { [x: string]: string; }; body: any }) => {
         const htmlBody = response.headers['content-type'].startsWith('text/html') && response.body;
         const re = /((https?:\/\/)(\w+)(.disqus.com))/;
         if (htmlBody && re.test(htmlBody)) {
@@ -136,7 +136,7 @@ export class DocumentDownloader {
         indexedDocument.route = res.route;
         console.log("FULL PATH\n", res.fullPath);
 
-        if(!DocumentParser.cleanDocument(res.fullPath, indexedDocument.url)){
+        if(!DocumentParser.cleanDocument(res.fullPath)){
           console.error("WARNING: Document " + res.fullPath + " has NOT been cleaned properly, it might have scripts, links and other things still active.");
         }
         indexedDocument = DocumentParser.getDocumentInfo(res.fullPath, indexedDocument);
@@ -223,7 +223,7 @@ export class DocumentDownloader {
   }
 
   // fetch() -> index() -> download()
-  static fetch(docObj: IndexDocument, callback: any) {
+  static fetch(docObj: IndexDocument, callback: (err: any, res: any) => void) {
     console.log('Attempting to download document!');
     console.log('Document URL', docObj.url);
 
@@ -267,7 +267,7 @@ export class DocumentDownloader {
       if (!err && res) {
         document.route = res.route;
 
-        if (!DocumentParser.cleanDocument(res.fullPath, document.url)){
+        if (!DocumentParser.cleanDocument(res.fullPath)){
           console.error("WARNING: Document " + res.fullPath + " has NOT been cleaned properly, it might have scripts, links and other things still active.");
         }
         document = DocumentParser.getDocumentInfo(res.fullPath, document);
@@ -317,6 +317,9 @@ export class DocumentDownloader {
       console.error("Error when deleting folder " + docName + "\n", err);
       log.push("Could not delete folder with webpage in storage. It may not exist.");
     }
+
+    // reindex - TODO: change to simply delete that one deleted document
+    Indexer.generateInvertedIndex();
     
     return log;
   }
