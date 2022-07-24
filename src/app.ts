@@ -25,11 +25,11 @@ import search from './routes/search';
 app.use(download);
 app.use(search);
 
-// expose in the localhost router to see files in browser
+// expose in the localhost router to see files in browser TODO: refactor to exposed downloaded and preview, not whole folder
 app.use(express.static('assets'));
 
 // Connect URL
-const url = 'mongodb://127.0.0.1:27017/test';
+const url = process.env.DB || 'mongodb://127.0.0.1:27017/test';
 
 const options = {
   maxPoolSize: 10, // Maintain up to 10 socket connections

@@ -14,7 +14,7 @@ import { QueryObject } from '../interfaces/queryInterface';
 export default class DocumentRetrieval {
 
   /**
-   * gets the document with the matching document name" in the database (set to be unique)
+   * gets the document with the matching document name in the database (set to be unique)
    * @param documentName the field "docName" of the document in the database
    * @returns document in database
    */

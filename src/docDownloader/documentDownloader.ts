@@ -139,6 +139,7 @@ export class DocumentDownloader {
         if(!DocumentParser.cleanDocument(res.fullPath)){
           console.error("WARNING: Document " + res.fullPath + " has NOT been cleaned properly, it might have scripts, links and other things still active.");
         }
+        // TODO: attach neurone iframe logger js script
         indexedDocument = DocumentParser.getDocumentInfo(res.fullPath, indexedDocument);
 
         // save to database

@@ -165,6 +165,9 @@ export default class DocumentParser {
     }
   }
 
+  // TODO
+  //static attachNeuroneIframeLogger(){} 
+
   static readFile(path: fs.PathOrFileDescriptor) {
     try {
       // dgacitua: http://stackoverflow.com/a/18711982
