@@ -21,7 +21,7 @@ function parseNumberOrUseDefault(stringToParse: string, def: number) {
 }
 
 // execute search query from index, highlights and downloaded files routes are part of the object
-router.get('/search/:query/:page?/:amount?', async (req, res) => {
+router.get('/search/:query/:page?/:amount?/:tags?', async (req, res) => {
   try {
 
     // make sure that page and amount are number types properly, and assign a default value in case they aren't in the route
@@ -32,18 +32,23 @@ router.get('/search/:query/:page?/:amount?', async (req, res) => {
     }
     if (req.params.amount){
       amount = parseNumberOrUseDefault(req.params.amount, amount);
-    }    
+    }
+
+    // add tags fron url to an array, divided by hyphens
+    const tags: string[] | undefined = req.params.tags? req.params.tags.split('-') : undefined;
 
     const query: QueryObject = {
       query: req.params.query,
       page: page,
       docAmount: amount,
-      locale: req.body.locale,
-      task: req.body.task,
-      domain: req.body.domain
+      tags: tags
+      //locale: req.body.locale, TODO: get from database instead, "get" in http doesn't have a body!
+      //task: req.body.task, // TODO: remove once tags are done
+      //domain: req.body.domain
     }
 
     const response = await DocumentRetrieval.searchDocument(query);
+    // TODO: add early return when database is empty to avoid error
     // trim indexed body to save bandwidth, it's a large string
     for (const key of response.response.docs) {
       if (key.indexedBody_t && key.indexedBody_t.length > 100){
@@ -68,7 +73,7 @@ router.get('/document/:docName', async (req, res) => {
   }
 });
 
-// get all documents from database, indexed body removed
+// get all documents from database, indexed body shortened
 router.get('/document', async (req, res) => {
   try {
     const response = await DocumentRetrieval.listAllDocuments();

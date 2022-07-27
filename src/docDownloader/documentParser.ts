@@ -165,8 +165,29 @@ export default class DocumentParser {
     }
   }
 
-  // TODO
-  //static attachNeuroneIframeLogger(){} 
+  /**
+   * attach the neurone utilities script to enable features inside iframes like logging mouse/keyboard/scroll movement and text snippets
+   * @param path html main page route
+   */
+  static attachNeuroneIframeLogger(path: fs.PathOrFileDescriptor) {
+    console.log("THE PATH OF THE HTML IS: ", path);
+
+    let scriptRef = '\n<!--Neurone iframe utilities reference added by Neurone-Search-->\n';
+    scriptRef = scriptRef + '<html><script src="/neurone-iframe-util.js"></script></html>\n';
+
+    fs.appendFile(path, scriptRef, (err) => {
+      if (err) {
+        console.error("Error while attaching neurone utilities script to page:");
+        console.error(err);
+        return;
+      }
+
+      console.log("Successfully attached the utils script to: ", path);
+      return;
+
+    });
+
+  } 
 
   static readFile(path: fs.PathOrFileDescriptor) {
     try {

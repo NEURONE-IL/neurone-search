@@ -38,6 +38,7 @@
     "@types/sha": "^3.0.1",
     "@types/solr-client": "^0.7.6",
     "@types/website-scraper": "^1.2.6",
+    "axios": "^0.27.2",
     "change-case": "^4.1.2",
     "charset": "^1.0.1",
     "cheerio": "^1.0.0-rc.10",

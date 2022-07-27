@@ -21,9 +21,11 @@ app.use((req, res, next) => {
 
 import download from './routes/download';
 import search from './routes/search';
+import solrConfig from './routes/solrConfig';
 
 app.use(download);
 app.use(search);
+app.use(solrConfig);
 
 // expose in the localhost router to see files in browser TODO: refactor to exposed downloaded and preview, not whole folder
 app.use(express.static('assets'));

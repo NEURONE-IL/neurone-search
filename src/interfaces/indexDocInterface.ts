@@ -4,8 +4,9 @@ export interface IndexDocument {
   title: string,
   locale: string,
   relevant?: boolean,
-  task: string,
-  domain: string,
+  //task: string, TODO: remove once tags are done
+  //domain: string,
+  tags: string[],
   keywords: string[],
   date: string,
   url: string,

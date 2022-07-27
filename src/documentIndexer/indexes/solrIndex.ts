@@ -24,8 +24,9 @@ export default class SolrIndex {
       searchSnippet: string[],
       indexedBody: string,
       keywords: string[],
-      task: string,
-      domain: string,
+      //task: string, TODO: remove when tags are done
+      //domain: string,
+      tags: string[],
       url: string
       }): docInsideIndex {
 
@@ -38,8 +39,9 @@ export default class SolrIndex {
       searchSnippet_t: customOptions?.searchSnippet || doc.searchSnippet || [], // Carlos: changed '' to []
       indexedBody_t: customOptions?.indexedBody || doc.indexedBody || '',
       keywords_t: customOptions?.keywords ||  doc.keywords || [],
-      task_s: customOptions?.task || doc.task || '',
-      domain_s: customOptions?.domain || doc.domain || '',
+      //task_s: customOptions?.task || doc.task || '',
+      //domain_s: customOptions?.domain || doc.domain || '',
+      tags_t: customOptions?.tags || doc.tags || [],
       url_t: customOptions?.url || doc.url || ''
       //type_t: doc.type || ' // TODO: implement type
     }
@@ -47,6 +49,7 @@ export default class SolrIndex {
 
   /**
    * starts up the solr index client with options in the env variables
+   * @param reload set to true to request load even if the client is already loaded
    */
   static async load(reload?: boolean) {
 
@@ -119,6 +122,8 @@ export default class SolrIndex {
       idxDocs.push(newDoc);
     });
 
+    console.log(idxDocs);
+
 
     console.log("Found " + idxDocs.length + " documents in database.");
     console.log('Deleting all documents currently in solr index... [solr-client delete()]');
@@ -190,16 +195,24 @@ export default class SolrIndex {
 
     const queryString = queryParam.query,
           queryLocale = queryParam.locale ? queryParam.locale : null,
-          queryTask = queryParam.task ? queryParam.task : null,
-          queryDomain = queryParam.domain ? queryParam.domain : null;
+          queryTags   = queryParam.tags ? queryParam.tags : null
+          //queryTask = queryParam.task ? queryParam.task : null, //TODO: remove once tags are done
+          //queryDomain = queryParam.domain ? queryParam.domain : null;
           
 
     // query string to be passed to solr
     const q1 = `(title_t:${queryString} OR indexedBody_t: ${queryString} OR keywords_t: ${queryString})`,
-          q2 = queryLocale ? ` AND locale_s:${queryLocale}` : '',
-          q3 = queryTask ? ` AND task_s:${queryTask}` : '',
-          q4 = queryDomain ? ` AND domain_s:${queryDomain}` : '';
-    const mainQuery = `(${q1}${q2}${q3}${q4})`;
+          q2 = queryLocale ? ` AND locale_s:${queryLocale}` : '';
+          //q3 = queryTask ? ` AND task_s:${queryTask}` : '',
+          //q4 = queryDomain ? ` AND domain_s:${queryDomain}` : '';
+
+    // q3 will be every tag that's requested in the tag arrays with an AND to exclude anything that's not in it
+    let q3 = "";
+    queryTags?.forEach( tagStr => {
+      q3 = q3 + ` AND tags_t: ${tagStr}`;
+    })          
+
+    const mainQuery = `(${q1}${q2}${q3})`;
 
     // create main query object
     const query = this.client.query();

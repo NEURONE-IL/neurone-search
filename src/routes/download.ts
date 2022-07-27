@@ -9,16 +9,17 @@ const router = express.Router();
 router.post('/download', (req, res) => {
 
   const indexedDocument: IndexDocument = { 
-    docName: req.body.docName || 'no-name-provided',
-    title: req.body.title,
+    url: req.body.url || '',
+    docName: req.body.docName || 'no-name-provided-' + Math.floor(Math.random()*1000), // recommended to always provide a unique name, rng for slight safety
+    title: req.body.title, //  auto generated if not in req body
     locale: req.body.locale || 'en',
     relevant: req.body.relevant || false,
-    task: req.body.task || [ 'pilot' ],
-    domain: req.body.domain || [ 'pilot' ],
+    //task: req.body.task || [ 'pilot' ], // TODO: remove once tag is done
+    //domain: req.body.domain || [ 'pilot' ], 
+    tags: req.body.tags || [],
     keywords: req.body.keywords || [],
     date: req.body.date || Date.now(),
     maskedUrl: req.body.maskedUrl || '',
-    url: req.body.url || '',
     searchSnippet: req.body.searchSnippet || [],
     indexedBody: '',
     route: '',
@@ -49,13 +50,16 @@ router.post('/download', (req, res) => {
 // download a webpage without saving to database/index to show a preview
 router.get('/download/preview', (req, res) => {
 
+
+
   const indexedDocument: IndexDocument = { 
     docName: req.body.docName || 'no-name-provided',
     title: req.body.title || 'New NEURONE Page',
     locale: req.body.locale || 'en',
     relevant: req.body.relevant || false,
-    task: req.body.task || 'pilot',
-    domain: req.body.domain || 'pilot',
+    //task: req.body.task || 'pilot', // TODO: remove once tags are done
+    //domain: req.body.domain || 'pilot',
+    tags: req.body.tags || [],
     keywords: req.body.keywords || [],
     date: req.body.date || Date.now(),
     maskedUrl: req.body.maskedUrl || '',

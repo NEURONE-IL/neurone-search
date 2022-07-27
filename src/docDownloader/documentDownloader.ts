@@ -118,8 +118,9 @@ export class DocumentDownloader {
       title: docObj.title || '',
       locale: docObj.locale || 'en',
       relevant: docObj.relevant || false,
-      task: docObj.task || 'pilot',
-      domain: docObj.domain || 'pilot',
+      //task: docObj.task || 'pilot', // TODO: remove once tags are done
+      //domain: docObj.domain || 'pilot',
+      tags: docObj.tags || [],
       keywords: docObj.keywords || [],
       date: docObj.date || Utils.getDate(),
       maskedUrl: docObj.maskedUrl,
@@ -139,8 +140,9 @@ export class DocumentDownloader {
         if(!DocumentParser.cleanDocument(res.fullPath)){
           console.error("WARNING: Document " + res.fullPath + " has NOT been cleaned properly, it might have scripts, links and other things still active.");
         }
-        // TODO: attach neurone iframe logger js script
+
         indexedDocument = DocumentParser.getDocumentInfo(res.fullPath, indexedDocument);
+        DocumentParser.attachNeuroneIframeLogger(res.fullPath);
 
         // save to database
         console.log("Saving document to database...");
@@ -175,8 +177,9 @@ export class DocumentDownloader {
               title: path.basename(file, path.extname(file)),
               locale: docObj.locale || 'en',
               relevant: docObj.relevant || false,
-              task: docObj.task ,
-              domain: docObj.domain ,
+              //task: docObj.task, // TODO: remove once tags are done
+              //domain: docObj.domain,
+              tags: docObj.tags || [],
               keywords: docObj.keywords || [],
               date: docObj.date || Utils.getDate(),
               url: urlOrigin,
@@ -251,8 +254,9 @@ export class DocumentDownloader {
       title: docObj.title || 'New NEURONE Page',
       locale: docObj.locale || 'en',
       relevant: docObj.relevant || false,
-      task: docObj.task || 'preview',
-      domain: docObj.domain || 'preview',
+      //task: docObj.task || 'preview', // TODO: remove once tags are done
+      //domain: docObj.domain || 'preview',
+      tags: docObj.tags || [],
       keywords: docObj.keywords || [],
       date: docObj.date || Utils.getDate(),
       url: docObj.maskedUrl || docObj.url || '',
