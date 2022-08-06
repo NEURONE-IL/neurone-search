@@ -1,3 +1,4 @@
+// web documents inside index
 export interface docInsideIndex {
   id: string,
   docId_s?: string,

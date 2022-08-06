@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-// script for the neurone search pages useful for loading them in iframes
+// script for the neurone search pages, useful for loading them inside iframes
 
 // features:
 // logging the mouse, keyboard and scroll behaviour inside an iframe using postMessage
@@ -50,7 +50,7 @@ function postMouseEvent(evt, type) {
   window.parent.postMessage({ objType: "neurone_mouse", mouseData: mouseData, windowData: windowData }, "*");
 }
 
-function postScrollEvent(evt) {
+function postScrollEvent() {
 
   const scrollData = {
     type  : "Neurone Iframe Scroll",

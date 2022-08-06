@@ -63,7 +63,8 @@ export default class ServerUtils {
 
   // dgacitua: Move element in array from one position to another
   // http://stackoverflow.com/a/5306832
-  static moveInArray(array: undefined[], old_index: number, new_index: number) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static moveInArray(array: any[], old_index: number, new_index: number) {
     while (old_index < 0) {
       old_index += array.length;
     }
@@ -96,12 +97,13 @@ export default class ServerUtils {
   static randomInteger(low: number, high: number) {
     return Math.floor(Math.random() * (high - low + 1) + low);
   }
-
+/* Carlos: not useful in modern TS/JS
   // dgacitua: Get variable type as string
   // http://stackoverflow.com/a/28475765
   static getVarType(obj: any) {
     return {}.toString.call(obj).split(' ')[1].slice(0, -1).toLowerCase();
   }
+*/
 /* Carlos: meteor dependency
   static isTesting() {
     return Meteor.isTest || Meteor.isAppTest;
@@ -152,7 +154,7 @@ export default class ServerUtils {
     let flag = false;
     const str = (fullString || '').toLowerCase();
 
-    startStringArray.forEach((el, idx, arr) => {
+    startStringArray.forEach((el, /*idx, arr*/) => {
       const start = (el || '').toLowerCase();
       if (str.startsWith(start)) flag = true;
     });

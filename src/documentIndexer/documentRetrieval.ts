@@ -9,6 +9,7 @@ import Utils from '../docDownloader/utils/serverUtils';
 //import { Video, Book } from '../database/definitions';
 import { DocumentsModel } from '../models/document';
 import { QueryObject } from '../interfaces/queryInterface';
+import { docInsideIndex } from '../interfaces/docInsideIndexInterface';
 
 
 export default class DocumentRetrieval {
@@ -61,13 +62,13 @@ export default class DocumentRetrieval {
    * @param offset Algorithm will insert a relevant document at this position (1 is first position)
    * @returns sorted array
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static iFuCoSort(documentArray: any[], insertions: number, offset: number) {
+  static customAdSort(documentArray: docInsideIndex[], insertions: number, offset: number) {
 
     // check if iFuCoSort is disabled
-    if (process.env.NEURONE_IFUCO_SORT_DISABLE){
+    if (!process.env.ENABLE_CUSTOM_AD_SORT){
       return documentArray;
     }
+    console.log("Custom advertisements sort enabled. Insertion: " + insertions + ". Offset: " + offset + ".");
 
     //==============//
     // iFuCoSort v3 //
@@ -77,9 +78,9 @@ export default class DocumentRetrieval {
     const insertNum = newArray.length < insertions ? newArray.length : insertions
     const offsetPos = newArray.length < offset ? newArray.length : offset;
 
-    if (newArray.length >= 2 && newArray[0].relevant) {
+    if (newArray.length >= 2 && newArray[0].relevant_b) {
       for (let k=0; k<newArray.length; k++) {
-        if (!newArray[k].relevant) {
+        if (!newArray[k].relevant_b) {
           newArray = Utils.moveInArray(newArray, k, 0);
           break;
         }
@@ -87,11 +88,13 @@ export default class DocumentRetrieval {
     }
 
     for (let i=0; i<insertNum; i++) {
-      if (newArray[i].relevant) return newArray;
+      if (newArray[i].relevant_b) {
+        return newArray;
+      }
     }
 
     for (let j=0; j<newArray.length; j++) {
-      if (newArray[j].relevant) {
+      if (newArray[j].relevant_b) {
         newArray = Utils.moveInArray(newArray, j, offsetPos-1);
         return newArray;  
       }
@@ -155,11 +158,12 @@ export default class DocumentRetrieval {
       const res = await SolrIndex.searchDocuments(queryObj);
 
       if (res && res.response.docs.length >= 1){ 
-        res.response.docs = this.iFuCoSort(res.response.docs, 3, 2);
+        res.response.docs = this.customAdSort(res.response.docs, 3, 0);
         return res;
       }
-      else 
+      else {
         return res;
+      }
     }/*
     else {
       // TODO: replace lunr

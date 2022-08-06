@@ -1,3 +1,4 @@
+// database web documents
 export interface IndexDocument {
   _id?: string,
   docName: string,

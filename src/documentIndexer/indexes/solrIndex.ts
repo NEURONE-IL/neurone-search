@@ -70,7 +70,7 @@ export default class SolrIndex {
 
     try {
       const mes = await this.client.ping()
-      console.log("Loaded successfully! ");
+      console.log("Loaded successfully! Details from solr:");
       console.log(mes);
       
       //const schemaRes = await this.client.createSchemaField("task_s", "strings");
@@ -245,10 +245,10 @@ export default class SolrIndex {
 
     try {
 
-      console.log("Executing query: " + queryParam.query);
-      console.log("Details: \n", query.parameters);
+      console.log("\nExecuting query: " + queryParam.query);
+      //console.log("Details: \n", query.parameters);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const res: any = await this.client.search(query); // any type because saerch response is inconsistent 
+      const res: any = await this.client.search(query); // any type because search response is inconsistent 
 
       //console.log("RESPONSE:\n", res);
       //console.log("DOCS:\n", res.response.docs);
@@ -271,7 +271,8 @@ export default class SolrIndex {
         res.route[indexDoc.id] = dbDoc[0].route;
       }
 
-      console.log("Final response:\n", res);
+      //console.log("Final response:\n", res);
+      console.log("Search query done. Found " + res.response.docs.length + " document(s).");
 
       return res;
 
