@@ -8,14 +8,14 @@
 console.log("Neurone iframe utilities script found and loaded.");
 // this script will be embedded to the neurone downloaded files
 // detect mouse events for the iframe
-document.addEventListener('mousemove', () => {postMouseEvent(event, "MouseMove")}, true);
-document.addEventListener('click', () => {postMouseEvent(event, "MouseClick")}, true);
-document.addEventListener('mouseenter', () => {postMouseEvent(event, "MouseEnter")}, true); // TODO: necessary? this is very trigger happy on divs
+document.addEventListener('mousemove', (event) => {postMouseEvent(event, "MouseMove")}, true);
+document.addEventListener('click', (event) => {postMouseEvent(event, "MouseClick")}, true);
+document.addEventListener('mouseenter', (event) => {postMouseEvent(event, "MouseEnter")}, true); // TODO: necessary? this is very trigger happy on divs
 // detect the full iframe scroll
 document.addEventListener('scroll', postScrollEvent, true);
 // detect key presses
-document.addEventListener('keydown', () => {postKeyboardEvent(event, "Iframe Key Down")}, true);
-document.addEventListener('keyup', () => {postKeyboardEvent(event, "Iframe Key Up")}, true);
+document.addEventListener('keydown', (event) => {postKeyboardEvent(event, "Iframe Key Down")}, true);
+document.addEventListener('keyup', (event) => {postKeyboardEvent(event, "Iframe Key Up")}, true);
 
 // recieve messages from another window
 window.onmessage = function(e) {
