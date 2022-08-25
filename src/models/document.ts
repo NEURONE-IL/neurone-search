@@ -7,9 +7,7 @@ const documentSchema =  new mongoose.Schema({
   title: { type: String },
   locale: { type: String },
   relevant: { type: String },
-  //task: { type: String },
-  //domain: { type: String },
-  tags: [{ type: String }], // replacement of task/domain, used to simply categorize documents
+  tags: [{ type: String }], // used to categorize documents
   keywords: [{ type: String }],
   date: { type: String },
   url: { type: String },

@@ -157,7 +157,7 @@ export default class DocumentRetrieval {
     if (Indexer.checkSolrIndex()) {
       const res = await SolrIndex.searchDocuments(queryObj);
 
-      if (res && res.response.docs.length >= 1){ 
+      if (res.response.docs && res.response.docs.length >= 1){ 
         res.response.docs = this.customAdSort(res.response.docs, 3, 0);
         return res;
       }
