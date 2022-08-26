@@ -49,6 +49,11 @@ router.get('/search/:query/:page?/:amount?/:tags?', async (req, res) => {
 
     const response = await DocumentRetrieval.searchDocument(query);
     // TODO: add early return when database is empty to avoid error
+    if (!response.response.docs) {
+      console.log("GET search API: No docs found for " + req.params.query + "!");
+      res.status(200).json({result: response});
+      return;
+    }
     // trim indexed body to save bandwidth, it's a large string
     for (const key of response.response.docs) {
       if (key.indexedBody_t && key.indexedBody_t.length > 100){

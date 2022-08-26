@@ -1,10 +1,13 @@
+import 'dotenv/config';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const solr = require('solr-client');
+import axios from 'axios';
 import { SolrClientParams, Client } from 'solr-client';
 import { DocumentsModel } from '../../models/document';
 import { IndexDocument } from '../../interfaces/indexDocInterface';
 import { QueryObject } from '../../interfaces/queryInterface';
 import { docInsideIndex } from '../../interfaces/docInsideIndexInterface';
+
 
 export default class SolrIndex {
 
@@ -60,21 +63,112 @@ export default class SolrIndex {
 
     console.log("Starting up solr-client...");
 
+    // delete fields using axios and the the solr API directly for core schema cleanup
+    // documentation:
+    // https://solr.apache.org/guide/solr/latest/indexing-guide/schema-api.html
+    // https://solr.apache.org/guide/solr/latest/indexing-guide/fields.html
+    const deleteFieldsConfig = {
+      "delete-field": [
+        {
+          "name": "tags_t"
+        },
+        {           
+          "name": "title_t"
+        },
+        {
+          "name": "indexedBody_t"
+        },
+        {
+          "name": "keywords_t"
+        },
+        {
+          "name": "searchSnippet_t"
+        }
+      ]
+    }
+
+    try {
+      console.log("Deleting fields from solr core for cleanup...");
+      const solrResponse = await axios.post('http://localhost:' + (process.env.NEURONE_SOLR_PORT || 8983) +'/solr/neurone/schema/fields?wt=json', deleteFieldsConfig);
+      console.log("Solr delete config response:", solrResponse.data);
+    } catch (err) {
+      console.error(err);
+    }
+
+    // add fields using axios and the solr API directly to properly configure schema
+    const addFieldsConfig = {
+      "add-field": [
+        {
+          "name": "tags_t",
+          "type": "text_en",
+          "multiValued": true,
+          "indexed": true,
+          "stored": true,
+          "termVectors": true,
+          "termPositions": true
+        },
+        {
+          "name": "title_t",
+          "type": "text_en",
+          "indexed": true,
+          "stored": true,
+          "termVectors": true,
+          "termPositions": true
+        },
+        {
+          "name": "indexedBody_t",
+          "type": "text_en",
+          "indexed": true,
+          "stored": true,
+          "termVectors": true,
+          "termPositions": true,
+          "termOffsets": true // to enable highlighting
+        },
+        {
+          "name": "keywords_t",
+          "type": "text_en",
+          "indexed": true,
+          "stored": true,
+          "multiValued": true,
+          "termVectors": true,
+          "termPositions": true
+        },
+        {
+          "name": "searchSnippet_t",
+          "type": "text_en",
+          "indexed": true,
+          "stored": true,
+          "multiValued": true,
+          "termVectors": true,
+          "termPositions": true
+        }
+      ]
+    }
+
+    try {
+      console.log("Adding back deleted fields...");
+      const solrResponse = await axios.post('http://localhost:' + (process.env.NEURONE_SOLR_PORT || 8983) +'/solr/neurone/schema/fields?wt=json', addFieldsConfig);
+      console.log("Axios solr delete config response:", solrResponse.data);
+    } catch (err) {
+      console.error(err);
+    }
+
+
     const options: SolrClientParams = {
       host: process.env.NEURONE_SOLR_HOST || 'localhost',
       port: process.env.NEURONE_SOLR_PORT || '8983',
       core: process.env.NEURONE_SOLR_CORE || 'neurone',
     }
 
+    // startup solr client
     this.client = solr.createClient(options);
 
+    // ping solr to ensure connection
     try {
       const mes = await this.client.ping()
       console.log("Loaded successfully! Details from solr:");
       console.log(mes);
       
-      //const schemaRes = await this.client.createSchemaField("task_s", "strings");
-      //console.log("SCHEMA CREATED:\n", schemaRes);
     } catch (err) {
       console.error("Error in load method:\n", err);
     }
@@ -95,6 +189,8 @@ export default class SolrIndex {
     }
 
     console.log("\n***Refreshing solr index from database***\n");
+
+
 
     let docs: IndexDocument[];
     try{
@@ -122,10 +218,9 @@ export default class SolrIndex {
       idxDocs.push(newDoc);
     });
 
-    console.log(idxDocs);
+    //console.log(idxDocs);
 
-
-    console.log("Found " + idxDocs.length + " documents in database.");
+    console.log("Found " + idxDocs.length + " document(s) in database.");
     console.log('Deleting all documents currently in solr index... [solr-client delete()]');
     // dgacitua: Deleting old documents
     // Carlos: searchIndex from solr-node replaced with client from solr-client
@@ -234,6 +329,7 @@ export default class SolrIndex {
       on: true,
       q: queryString,
       fl: "indexedBody_t",
+      fragsize: 5,
       snippets: 3,
       simplePre: "<em class=\"hl\">",
       simplePost: "</em>",

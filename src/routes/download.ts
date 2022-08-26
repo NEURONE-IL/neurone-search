@@ -8,14 +8,26 @@ const router = express.Router();
 // download, save in db and index automatically rquested document, send back saved object in database
 router.post('/download', (req, res) => {
 
+  /* example of a payload for this route
+  {
+    "url": "https://imagine.gsfc.nasa.gov/science/objects/milkyway1.html",
+    "docName": "milky-way",
+    "title": "The Milky Way", // not required, can be generated automatically if not specified
+    "searchSnippet": ["There are billions of other galaxies in the Universe. Only three galaxies outside our own Milky Way Galaxy can be seen without a telescope, and appear ", "but its getting closer, and researchers predict that in about 4 billion years it will collide with the Milky Way"],
+    "tags": ["galaxy", "educational"],
+    "keywords": ["galaxy", "milky", "astronomy"],
+    "locale": "en",
+    "relevant": true,
+    "maskedUrl": "https://imagine.gsfc.nasa.gov/milky-way"
+  }
+  */
+
   const indexedDocument: IndexDocument = { 
     url: req.body.url || '',
     docName: req.body.docName || 'no-name-provided-' + Math.floor(Math.random()*1000), // recommended to always provide a unique name, rng for slight safety
     title: req.body.title, //  auto generated if not in req body
     locale: req.body.locale || 'en',
     relevant: req.body.relevant || false,
-    //task: req.body.task || [ 'pilot' ], // TODO: remove once tag is done
-    //domain: req.body.domain || [ 'pilot' ], 
     tags: req.body.tags || [],
     keywords: req.body.keywords || [],
     date: req.body.date || Date.now(),
