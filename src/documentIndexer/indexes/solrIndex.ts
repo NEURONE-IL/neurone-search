@@ -64,6 +64,9 @@ export default class SolrIndex {
     console.log("Starting up solr-client...");
 
     // delete fields using axios and the the solr API directly for core schema cleanup
+    // documentation:
+    // https://solr.apache.org/guide/solr/latest/indexing-guide/schema-api.html
+    // https://solr.apache.org/guide/solr/latest/indexing-guide/fields.html
     const deleteFieldsConfig = {
       "delete-field": [
         {

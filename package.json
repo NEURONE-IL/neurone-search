@@ -1,6 +1,6 @@
 {
   "name": "neurone-search",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "neurone-search",
   "main": "dist/app.js",
   "scripts": {
