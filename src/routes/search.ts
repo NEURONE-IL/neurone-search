@@ -1,6 +1,6 @@
 import express from 'express';
-import DocumentRetrieval from '../documentIndexer/documentRetrieval';
-import { QueryObject } from '../interfaces/queryInterface';
+import DocumentRetrieval from '../documentIndexer/documentRetrieval.js';
+import { QueryObject } from '../interfaces/queryInterface.js';
 
 
 const router = express.Router();
@@ -43,14 +43,11 @@ router.get('/search/:query/:page?/:amount?/:tags?', async (req, res) => {
       docAmount: amount,
       tags: tags
       //locale: req.body.locale, TODO: get from database instead, "get" in http doesn't have a body!
-      //task: req.body.task, // TODO: remove once tags are done
-      //domain: req.body.domain
     }
 
     const response = await DocumentRetrieval.searchDocument(query);
-    // TODO: add early return when database is empty to avoid error
     if (!response.response.docs) {
-      console.log("GET search API: No docs found for " + req.params.query + "!");
+      console.log("GET search API: No docs found for '" + req.params.query + "'!");
       res.status(200).json({result: response});
       return;
     }

@@ -1,20 +1,20 @@
 import fs from 'fs-extra';
 import path from 'path';
 
-import DocumentParser from './documentParser';
-import Indexer from '../documentIndexer/indexer';
+import DocumentParser from './documentParser.js';
+import Indexer from '../documentIndexer/indexer.js';
 
-import Utils from './utils/serverUtils';
+import Utils from './utils/serverUtils.js';
 
-import { DocumentsModel } from '../models/document';
+import { DocumentsModel } from '../models/document.js';
 //import { Documents } from '../../imports/database/documents/index'; // TODO: replace with local mongodb  
 //import { ImageSearch } from '../database/definitions'; 
 import { URL } from 'url';
 
 import readdir from 'readdir-enhanced';
-import scrape from 'website-scraper'; // TODO: Check if 5.0.0 can be made compatible with commonjs https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+import scrape from 'website-scraper'; // https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
 
-import { IndexDocument } from '../interfaces/indexDocInterface'
+import { IndexDocument } from '../interfaces/indexDocInterface.js'
 
 const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36';
 const errorObj = { msg: 'ERROR!' };
@@ -40,17 +40,16 @@ export class DocumentDownloader {
       fs.ensureDirSync(previewDir);
     }
     catch (err) {
-      // Carlos: eliminada función meteor de error
       console.error(err);
       throw new Error('Cannot create download directories!');
     }
   }
 
   // dgacitua: Automatic document download from web
-  static download(docName: string, documentUrl: string, isIndexable: boolean, callback: (arg0: Error | null, arg1?: {
-      docName: string; pageUrl: string; // Carlos: added null ckeck
-      route: string; fullPath: string;
-    } | undefined) => void) {
+  static download(docName: string, documentUrl: string, isIndexable: boolean, callback: (arg0: Error | unknown | null, arg1?: {
+        docName: string; pageUrl: string; // Carlos: added null ckeck
+        route: string; fullPath: string;
+      } | undefined) => void) {
     let downloadPath: string, queryPath: string;
 
     if (isIndexable) {
@@ -62,47 +61,34 @@ export class DocumentDownloader {
       queryPath = path.join(previewName, 'currentDocument');
     }
     
-    const options = {
+    const options: scrape.Options = {
       urls: [ documentUrl ],
       directory: downloadPath,
       filenameGenerator: 'bySiteStructure', //'byType',
       recursive: false,
-      httpResponseHandler: (response: { headers: { [x: string]: string; }; body: any }) => {
-        const htmlBody = response.headers['content-type'].startsWith('text/html') && response.body;
-        const re = /((https?:\/\/)(\w+)(.disqus.com))/;
-        if (htmlBody && re.test(htmlBody)) {
-          const updatedHtmlBody = htmlBody.replace(re, ''); 
-          return Promise.resolve(updatedHtmlBody);
-        }
-        else {
-          return Promise.resolve(response.body);
-        }
-      },
       request: {
         headers: { 'User-Agent': userAgent }
       }
     }
 
-    fs.remove(downloadPath, (err) => {
+    fs.remove(downloadPath, async (err) => {
       if (!err) {
-        console.log("Starting website download...")
-        scrape(options, (err2, res2) => {
-          if (!err2) {
+        console.log("Starting website download...");
+        try {
+          const res2 = await scrape(options);
             console.log("Download complete.");
-            const response = {
-              docName: docName,
-              pageUrl: res2 ? res2[0].url : '', // Carlos: added null ckeck
-              route: path.join(queryPath, res2 ? res2[0].filename : ''),
-              fullPath: path.join(downloadPath, res2 ? res2[0].filename : '')
-            };
+              const response = {
+                docName: docName,
+                pageUrl: res2 ? res2[0].url : '',
+                route: path.join(queryPath, res2 ? res2[0].filename : ''),
+                fullPath: path.join(downloadPath, res2 ? res2[0].filename : '')
+              };
 
-            callback(null, response);
-          }
-          else {
-            console.error('Error while downloading document', documentUrl, err2);
-            callback(err2);
-          }
-        });  
+              callback(null, response); 
+        } catch (err: unknown) {
+          console.error('Error while downloading document', documentUrl, err);
+          callback(err);
+        }
       }
       else {
         console.error('Error while deleting old document files', documentUrl, err);
@@ -118,8 +104,6 @@ export class DocumentDownloader {
       title: docObj.title || '',
       locale: docObj.locale || 'en',
       relevant: docObj.relevant || false,
-      //task: docObj.task || 'pilot', // TODO: remove once tags are done
-      //domain: docObj.domain || 'pilot',
       tags: docObj.tags || [],
       keywords: docObj.keywords || [],
       date: docObj.date || Utils.getDate(),
@@ -167,7 +151,7 @@ export class DocumentDownloader {
           currentFolder = path.basename(directory);
         }
 
-        readdir(directory,{filter: getImg , deep: true}, function(err, files){
+        readdir.readdirAsync(directory,{filter: getImg , deep: true}, function(err, files){
           if(err){
             return console.log(err)
           }
@@ -177,16 +161,12 @@ export class DocumentDownloader {
               title: path.basename(file, path.extname(file)),
               locale: docObj.locale || 'en',
               relevant: docObj.relevant || false,
-              //task: docObj.task, // TODO: remove once tags are done
-              //domain: docObj.domain,
               tags: docObj.tags || [],
               keywords: docObj.keywords || [],
               date: docObj.date || Utils.getDate(),
               url: urlOrigin,
               searchSnippet: docObj.searchSnippet || '',
               indexedBody: 'test',
-              // Carlos: original that used meteor-mongodb
-              //route: Documents.findOne({ route: indexedDocument.route })._id,
               route: DocumentsModel.findOne({ route: indexedDocument.route }),
               img: path.join(res.route,'../..')+'/'+file,
               type: 'image'
@@ -200,15 +180,17 @@ export class DocumentDownloader {
         if (result.ok === 1) {
 
           DocumentsModel.findOne({ route: indexedDocument.route }).then((doc) => {
-            Indexer.indexDocumentAsync(doc, (err2) => {
-              if (!err2) {
-                callback(null, doc);  
-              }
-              else {
-                console.error('Error while indexing document', docObj.url, err2);
-                callback(err2, null);
-              }
-            });
+            if (doc) {
+              Indexer.indexDocumentAsync(doc, (err2) => {
+                if (!err2) {
+                  callback(null, doc);  
+                }
+                else {
+                  console.error('Error while indexing document', docObj.url, err2);
+                  callback(err2, null);
+                }
+              });
+            }
           }).catch( (err: Error) => {
             console.error(err);
             callback(err, null);
@@ -254,8 +236,6 @@ export class DocumentDownloader {
       title: docObj.title || 'New NEURONE Page',
       locale: docObj.locale || 'en',
       relevant: docObj.relevant || false,
-      //task: docObj.task || 'preview', // TODO: remove once tags are done
-      //domain: docObj.domain || 'preview',
       tags: docObj.tags || [],
       keywords: docObj.keywords || [],
       date: docObj.date || Utils.getDate(),
@@ -323,7 +303,7 @@ export class DocumentDownloader {
       log.push("Could not delete folder with webpage in storage. It may not exist.");
     }
 
-    // reindex - TODO: change to simply delete that one deleted document
+    // reindex
     Indexer.generateInvertedIndex();
     
     return log;

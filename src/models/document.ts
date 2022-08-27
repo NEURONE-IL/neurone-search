@@ -3,19 +3,19 @@ import uniqueValidator from 'mongoose-unique-validator';
 
 const documentSchema =  new mongoose.Schema({
 
-  docName: { type: String, unique: true },
-  title: { type: String },
-  locale: { type: String },
-  relevant: { type: String },
+  docName: { type: String, unique: true, required: true },
+  title: { type: String, required: true },
+  locale: { type: String, required: true },
+  relevant: { type: Boolean, required: true },
   tags: [{ type: String }], // used to categorize documents
   keywords: [{ type: String }],
-  date: { type: String },
-  url: { type: String },
-  maskedUrl: { type: String },
+  date: { type: String, required: true },
+  url: { type: String, required: true },
+  maskedUrl: { type: String, required: true },
   searchSnippet: [{ type: String }],
-  indexedBody: { type: String },
-  route: { type: String },
-  hash: { type: String },
+  indexedBody: { type: String, required: true },
+  route: { type: String, required: true },
+  hash: { type: String, required: true },
 
 });
 

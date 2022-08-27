@@ -1,15 +1,15 @@
-import SolrIndex from './indexes/solrIndex';
+import SolrIndex from './indexes/solrIndex.js';
 import 'dotenv/config';
 //import LunrIndex from './indexes/lunrIndex';
-import Indexer from './indexer';
+import Indexer from './indexer.js';
 
-import Utils from '../docDownloader/utils/serverUtils';
+import Utils from '../docDownloader/utils/serverUtils.js';
 
 //import { Documents } from '../../imports/database/documents/index';
 //import { Video, Book } from '../database/definitions';
-import { DocumentsModel } from '../models/document';
-import { QueryObject } from '../interfaces/queryInterface';
-import { docInsideIndex } from '../interfaces/docInsideIndexInterface';
+import { DocumentsModel } from '../models/document.js';
+import { QueryObject } from '../interfaces/queryInterface.js';
+import { docInsideIndex } from '../interfaces/docInsideIndexInterface.js';
 
 
 export default class DocumentRetrieval {
@@ -24,7 +24,7 @@ export default class DocumentRetrieval {
     try{
       const doc = await DocumentsModel.findOne({ docName: documentName });
       if (doc && doc._id && doc.route) {
-        doc.routeUrl = '/' + doc.route;
+        doc.route = '/' + doc.route;
         return doc;
       }
       /* //TODO: port books

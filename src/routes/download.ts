@@ -1,6 +1,6 @@
 import express from 'express';
-import { DocumentDownloader } from '../docDownloader/documentDownloader';
-import { IndexDocument } from '../interfaces/indexDocInterface';
+import { DocumentDownloader } from '../docDownloader/documentDownloader.js';
+import { IndexDocument } from '../interfaces/indexDocInterface.js';
 
 
 const router = express.Router();

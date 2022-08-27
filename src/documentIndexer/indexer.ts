@@ -1,7 +1,7 @@
 //import Utils from './utils/serverUtils';
-import SolrIndex from '../documentIndexer/indexes/solrIndex';
+import SolrIndex from '../documentIndexer/indexes/solrIndex.js';
 //import LunrIndex from './indexes/lunrIndex';
-import { IndexDocument } from '../interfaces/indexDocInterface';
+import { IndexDocument } from '../interfaces/indexDocInterface.js';
 
 //import { Documents } from '../../imports/database/documents/index'; // TODO: define this import
 
