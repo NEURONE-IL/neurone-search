@@ -1,12 +1,11 @@
 import 'dotenv/config';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const solr = require('solr-client');
+import solr from 'solr-client';
+import { Client, SolrClientParams } from 'solr-client';
 import axios from 'axios';
-import { SolrClientParams, Client } from 'solr-client';
-import { DocumentsModel } from '../../models/document';
-import { IndexDocument } from '../../interfaces/indexDocInterface';
-import { QueryObject } from '../../interfaces/queryInterface';
-import { docInsideIndex } from '../../interfaces/docInsideIndexInterface';
+import { DocumentsModel } from '../../models/document.js';
+import { IndexDocument } from '../../interfaces/indexDocInterface.js';
+import { QueryObject } from '../../interfaces/queryInterface.js';
+import { docInsideIndex } from '../../interfaces/docInsideIndexInterface.js';
 
 
 export default class SolrIndex {
@@ -24,12 +23,10 @@ export default class SolrIndex {
     customOptions?: {
       relevant: boolean,
       title: string,
-      searchSnippet: string[],
+      searchSnippet: { type?: string | undefined; }[],
       indexedBody: string,
-      keywords: string[],
-      //task: string, TODO: remove when tags are done
-      //domain: string,
-      tags: string[],
+      keywords: { type?: string | undefined; }[],
+      tags: { type?: string | undefined; }[],
       url: string
       }): docInsideIndex {
 
@@ -39,11 +36,9 @@ export default class SolrIndex {
       locale_s: doc.locale,
       relevant_b: customOptions?.relevant || doc.relevant || false,
       title_t: customOptions?.title || doc.title || '',
-      searchSnippet_t: customOptions?.searchSnippet || doc.searchSnippet || [], // Carlos: changed '' to []
+      searchSnippet_t: customOptions?.searchSnippet || doc.searchSnippet || [],
       indexedBody_t: customOptions?.indexedBody || doc.indexedBody || '',
       keywords_t: customOptions?.keywords ||  doc.keywords || [],
-      //task_s: customOptions?.task || doc.task || '',
-      //domain_s: customOptions?.domain || doc.domain || '',
       tags_t: customOptions?.tags || doc.tags || [],
       url_t: customOptions?.url || doc.url || ''
       //type_t: doc.type || ' // TODO: implement type
@@ -89,7 +84,7 @@ export default class SolrIndex {
 
     try {
       console.log("Deleting fields from solr core for cleanup...");
-      const solrResponse = await axios.post('http://localhost:' + (process.env.NEURONE_SOLR_PORT || 8983) +'/solr/neurone/schema/fields?wt=json', deleteFieldsConfig);
+      const solrResponse = await axios.default.post('http://localhost:' + (process.env.NEURONE_SOLR_PORT || 8983) +'/solr/neurone/schema/fields?wt=json', deleteFieldsConfig);
       console.log("Solr delete config response:", solrResponse.data);
     } catch (err) {
       console.error(err);
@@ -147,17 +142,24 @@ export default class SolrIndex {
 
     try {
       console.log("Adding back deleted fields...");
-      const solrResponse = await axios.post('http://localhost:' + (process.env.NEURONE_SOLR_PORT || 8983) +'/solr/neurone/schema/fields?wt=json', addFieldsConfig);
+      const solrResponse = await axios.default.post('http://localhost:' + (process.env.NEURONE_SOLR_PORT || 8983) +'/solr/neurone/schema/fields?wt=json', addFieldsConfig);
       console.log("Axios solr delete config response:", solrResponse.data);
     } catch (err) {
       console.error(err);
     }
 
+    const options: SolrClientParams = {};
 
-    const options: SolrClientParams = {
-      host: process.env.NEURONE_SOLR_HOST || 'localhost',
-      port: process.env.NEURONE_SOLR_PORT || '8983',
-      core: process.env.NEURONE_SOLR_CORE || 'neurone',
+    options.host = process.env.NEURONE_SOLR_HOST || 'localhost';
+    options.core = process.env.NEURONE_SOLR_CORE || 'neurone';
+
+    if (process.env.NEURONE_SOLR_PORT) {
+      let port = parseInt(process.env.NEURONE_SOLR_PORT) || 8983;
+      if (!port) {
+        port = 8983;
+        console.log("Could not parse port number from the env variable NEURONE_SOLR_PORT. Using " + port + " instead");
+      }
+      options.port = port;
     }
 
     // startup solr client
@@ -290,10 +292,7 @@ export default class SolrIndex {
 
     const queryString = queryParam.query,
           queryLocale = queryParam.locale ? queryParam.locale : null,
-          queryTags   = queryParam.tags ? queryParam.tags : null
-          //queryTask = queryParam.task ? queryParam.task : null, //TODO: remove once tags are done
-          //queryDomain = queryParam.domain ? queryParam.domain : null;
-          
+          queryTags   = queryParam.tags ? queryParam.tags : null;
 
     // query string to be passed to solr
     const q1 = `(title_t:${queryString} OR indexedBody_t: ${queryString} OR keywords_t: ${queryString})`,

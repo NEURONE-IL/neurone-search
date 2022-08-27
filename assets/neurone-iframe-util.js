@@ -10,7 +10,7 @@ console.log("Neurone iframe utilities script found and loaded.");
 // detect mouse events for the iframe
 document.addEventListener('mousemove', (event) => {postMouseEvent(event, "MouseMove")}, true);
 document.addEventListener('click', (event) => {postMouseEvent(event, "MouseClick")}, true);
-document.addEventListener('mouseenter', (event) => {postMouseEvent(event, "MouseEnter")}, true); // TODO: necessary? this is very trigger happy on divs
+document.addEventListener('mouseenter', (event) => {postMouseEvent(event, "MouseEnter")}, true); // note: very trigger happy on divs
 // detect the full iframe scroll
 document.addEventListener('scroll', postScrollEvent, true);
 // detect key presses

@@ -1,16 +1,14 @@
 // Carlos: ported to TS
 import fs from 'fs';
-import { URL } from 'url'; // Carlos: updated to use the WHATWG API
+import { URL } from 'url'; // updated to use the WHATWG API
 import path from 'path';
 import iconv from 'iconv';
 import charset from 'charset';
 import sha from 'sha';
 import { load } from 'cheerio';
 import { htmlToText } from 'html-to-text';
-import { pascalCase } from 'change-case'; // Carlos: replacing the older package 'uppercamelcase'
-import { IndexDocument } from '../interfaces/indexDocInterface';
-
-//import Utils from './utils/serverUtils';
+import { pascalCase } from 'change-case';
+import { IndexDocument } from '../interfaces/indexDocInterface.js';
 
 export default class DocumentParser {
   static getHtmlAsText(documentPath: string) {

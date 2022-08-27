@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 const app = express();
 const port = process.env.PORT || 3001;
 app.use(express.urlencoded({extended: true})); // Parse URL-encoded bodies
-app.use(express.json()); // TODO: add form data support
+app.use(express.json());
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
@@ -13,13 +13,13 @@ app.use((req, res, next) => {
   next();
 });
 
-import download from './routes/download';
-import search from './routes/search';
+import download from './routes/download.js';
+import search from './routes/search.js';
 
 app.use(download);
 app.use(search);
 
-// expose in the localhost router to see files in browser TODO: refactor to exposed downloaded and preview, not whole folder
+// expose in the localhost router to see files in browser
 app.use(express.static('assets'));
 
 // Connect URL
