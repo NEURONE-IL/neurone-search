@@ -13,11 +13,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// swagger
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsDoc from 'swagger-jsdoc';
+import swaggerOptions from './docs/openapiconfg.js';
+
 import download from './routes/download.js';
 import search from './routes/search.js';
 
 app.use(download);
 app.use(search);
+
+// swagger docs
+const docSpecs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(docSpecs));
 
 // expose in the localhost router to see files in browser
 app.use(express.static('assets'));

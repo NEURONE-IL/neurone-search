@@ -295,7 +295,7 @@ export class DocumentDownloader {
     // delete from folders
     console.log("Deleting folder with webpage: " + docName);
     try {
-      fs.rmSync((process.env.NEURONE_ASSET_PATH + "/" || "./assets/") + dirName  + "/" + docName, {recursive: true} );
+      fs.rmSync((process.env.NEURONE_ASSET_PATH || "./assets/") + dirName  + "/" + docName, {recursive: true} );
       console.log("Deleted successfully");
       log.push("Webpage deleted successfully from local storage.");
     } catch (err) {

@@ -97,29 +97,14 @@ export default class ServerUtils {
   static randomInteger(low: number, high: number) {
     return Math.floor(Math.random() * (high - low + 1) + low);
   }
-/* Carlos: not useful in modern TS/JS
-  // dgacitua: Get variable type as string
-  // http://stackoverflow.com/a/28475765
-  static getVarType(obj: any) {
-    return {}.toString.call(obj).split(' ')[1].slice(0, -1).toLowerCase();
-  }
-*/
-/* Carlos: meteor dependency
-  static isTesting() {
-    return Meteor.isTest || Meteor.isAppTest;
-  }
-*/
+
+  
   static getAssetPath() {
-    if (/*this.isTesting() Carlos: function commented */ undefined) {
-      return rootPath;
+    if (process.env.NEURONE_ASSET_PATH) {
+      return process.env.NEURONE_ASSET_PATH;
     }
     else {
-      if (process.env.NEURONE_ASSET_PATH) {
-        return process.env.NEURONE_ASSET_PATH;
-      }
-      else {
-        return path.join(rootPath);
-      }
+      return "./assets/";
     }
   }
 

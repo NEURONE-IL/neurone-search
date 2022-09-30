@@ -8,7 +8,9 @@ import { IndexDocument } from '../interfaces/indexDocInterface.js';
 export default class Indexer {
 
   static checkSolrIndex() {
-    return (process.env.NEURONE_SOLR_HOST && process.env.NEURONE_SOLR_PORT && process.env.NEURONE_SOLR_CORE);
+    // for future proofing if another search engine is implemented
+    //return process.env.NEURONE_SEARCH_ENGINE
+    return (true);
   }
 
   // TODO: unnecesary under new structure?
