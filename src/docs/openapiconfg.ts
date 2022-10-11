@@ -3,7 +3,7 @@ export default {
   "definition": {
       "openapi": "3.0.3",
       "info": {
-          "version": "1.0.2",
+          "version": "1.1.0",
           "title": "Neurone-Search",
           "description": "Back-end to download websites and make search queries based on them.",
           "license": {

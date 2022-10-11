@@ -333,6 +333,7 @@ router.get('/document', async (req, res) => {
  *                message:
  *                  type: string
  *                  description: Small description of the result
+ *                  example: Refresh Successful
  *      500:
  *        description: Error in server
  *        content:
@@ -343,6 +344,7 @@ router.get('/document', async (req, res) => {
  *                message:
  *                  type: string
  *                  description: A small description of the error, see server console for details.
+ *                  example: Error refreshing the index.
  */
 router.get('/refresh', async (req, res) => {
   try {
