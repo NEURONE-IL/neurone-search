@@ -5,29 +5,172 @@ import { IndexDocument } from '../interfaces/indexDocInterface.js';
 
 const router = express.Router();
 
-// download, save in db and index automatically rquested document, send back saved object in database
-router.post('/download', (req, res) => {
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *    DownloadedDoc:
+ *      type: object
+ *      properties:
+ *        _id:
+ *          type: string
+ *          description: The document ID of the webpage data in the database
+ *        route:
+ *          type: string
+ *          description: "The webpage index location in the backend. To be accessed with http://localhost:{port}//{route}"
+ *        __v:
+ *          type: number
+ *          description: "Mongoose version key https://mongoosejs.com/docs/guide.html#versionKey"
+ *        date:
+ *          type: string
+ *          description: Date when the document was downloaded, uses the date format of Mongo
+ *        docName:
+ *          type: string
+ *          description: A UNIQUE name that can be used to find the website in the database instead of the mongo ID
+ *        hash:
+ *          type: string
+ *          description: A sha256 hash of the website
+ *        indexedBody:
+ *          type: string
+ *          description: The plain text contents of the website, this is what the search engine loads into its system. May be trimmed in the search queries.
+ *        keywords:
+ *          type: array
+ *          items:
+ *            type: string
+ *          description: Words that can be used as important for the website.
+ *        locale:
+ *          type: string
+ *          description: The locale of the webpage, currently en and es have been tested
+ *        maskedUrl:
+ *          type: string
+ *          description: Use this to have a dummy URL instead of the actual webpage's URL.
+ *        searchSnippet:
+ *          type: array
+ *          items:
+ *            type: string
+ *          description: A placeholder snippet to appear on a SERP if the search engine could not generate one.
+ *        tags:
+ *          type: array
+ *          items:
+ *            type: string
+ *          description: Tags that can filter the webpage in a search query
+ *        title:
+ *          type: string
+ *          description: A title that can be given automatically by the back-end if not provided, to be used in a SERP title result
+ *        url:
+ *          type: string
+ *          description: The original link to the webpage
+ * 
+ *          
+ *    DownloadRequest:
+ *      type: object
+ *      properties:
+ *        url:
+ *          type: string
+ *          description: The link to the webpage to download
+ *        docName:
+ *          type: string
+ *          description: A Unique name to be given to the webpage in the database
+ *        title:
+ *          type: string
+ *          description: A title that can be given automatically by the back-end if not provided, to be used in a SERP title result
+ *        searchSnippet:
+ *          type: array
+ *          items:
+ *            type: string
+ *          description: A placeholder snippet to appear on a SERP if the search engine could not generate one.
+ *        tags:
+ *          type: array
+ *          items:
+ *            type: string
+ *          description: tags that can filter the webpage in a search query
+ *        keywords:
+ *          type: array
+ *          items:
+ *            type: string
+ *          description: Words that can be used as important for the website.
+ *        locale:
+ *          type: string
+ *          description: The locale of the webpage, currently en and es have been tested
+ *        relevant:
+ *          type: boolean
+ *          description: True if the website is relevant for the search activity. That is, if is it related to what is being searched for. True if missing.
+ *        maskedUrl:
+ *          type: string
+ *          description: Use this to have a dummy URL instead of the actual webpage's URL.
+ *      required:
+ *        - url    
+ *        - docName
+ *      example: 
+ *        url: "https://imagine.gsfc.nasa.gov/science/objects/milkyway1.html"
+ *        "docName": "milky-way"
+ *        "title": "The Milky Way"
+ *        "searchSnippet": ["There are billions of other galaxies in the Universe.", "and researchers predict that in about 4 billion years"]
+ *        "tags": ["galaxy", "educational"]
+ *        "keywords": ["galaxy", "milky", "astronomy"]
+ *        "locale": "en"
+ *        "relevant": true,
+ *        "maskedUrl": "https://imagine.gsfc.nasa.gov/milky-way"
+ * 
+ */
 
-  /* example of a payload for this route
-  {
-    "url": "https://imagine.gsfc.nasa.gov/science/objects/milkyway1.html",
-    "docName": "milky-way",
-    "title": "The Milky Way", // not required, can be generated automatically if not specified
-    "searchSnippet": ["There are billions of other galaxies in the Universe. Only three galaxies outside our own Milky Way Galaxy can be seen without a telescope, and appear ", "but its getting closer, and researchers predict that in about 4 billion years it will collide with the Milky Way"],
-    "tags": ["galaxy", "educational"],
-    "keywords": ["galaxy", "milky", "astronomy"],
-    "locale": "en",
-    "relevant": true,
-    "maskedUrl": "https://imagine.gsfc.nasa.gov/milky-way"
-  }
-  */
+/**
+ * @swagger
+ * tags:
+ *  name: Download
+ *  description: Website download routes
+ */
+
+
+/**
+ * @swagger
+ * /download:
+ *  post:
+ *    summary: Download a website from the web, save its information on the database and add it to the search index
+ *    description: It may take a few seconds to complete the request
+ *    tags: [Download]
+ *    requestBody:
+ *      required: true
+ *      content: 
+ *        application/json:
+ *          schema:
+ *            $ref: '#components/schemas/DownloadRequest'
+ *    responses:
+ *      201:
+ *        description: Website downloaded, saved to the database, and saved to the search index successfully
+ *        content: 
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *               message:
+ *                 type: string
+ *                 description: A message describing the result of the request
+ *               result:
+ *                 $ref: '#components/schemas/DownloadedDoc'
+ *      500:
+ *        description: Error in the server while downloading the document
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ *                  description: A message describing the error
+ *                error:
+ *                  type: string
+ *                  description: The server error
+ *               
+ */
+router.post('/download', (req, res) => {
 
   const indexedDocument: IndexDocument = { 
     url: req.body.url || '',
     docName: req.body.docName || 'no-name-provided-' + Math.floor(Math.random()*1000), // recommended to always provide a unique name, rng for slight safety
     title: req.body.title, //  auto generated if not in req body
     locale: req.body.locale || 'en',
-    relevant: req.body.relevant || false,
+    relevant: req.body.relevant || true,
     tags: req.body.tags || [],
     keywords: req.body.keywords || [],
     date: req.body.date || Date.now(),
@@ -59,18 +202,55 @@ router.post('/download', (req, res) => {
 
 });
 
-// download a webpage without saving to database/index to show a preview
-router.get('/download/preview', (req, res) => {
-
-
+// 
+/**
+ * @swagger
+ * /download/preview:
+ *  post:
+ *    summary: Download a webpage without saving to database/index, it can be accessed with the info from the response
+ *    description: It may take a few seconds to complete the request
+ *    tags: [Download]
+ *    requestBody:
+ *      required: true
+ *      content: 
+ *        application/json:
+ *          schema:
+ *            $ref: '#components/schemas/DownloadRequest'
+ *    responses:
+ *      200:
+ *        description: Website downloaded, preview sent
+ *        content: 
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *               message:
+ *                 type: string
+ *                 description: A message describing the result of the request
+ *               result:
+ *                 $ref: '#components/schemas/DownloadedDoc'
+ *      500:
+ *        description: Error in the server while downloading the document
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ *                  description: A message describing the error
+ *                error:
+ *                  type: string
+ *                  description: The server error
+ *               
+ */
+router.post('/download/preview', (req, res) => {
 
   const indexedDocument: IndexDocument = { 
     docName: req.body.docName || 'no-name-provided',
     title: req.body.title || 'New NEURONE Page',
     locale: req.body.locale || 'en',
-    relevant: req.body.relevant || false,
-    //task: req.body.task || 'pilot', // TODO: remove once tags are done
-    //domain: req.body.domain || 'pilot',
+    relevant: req.body.relevant || true,
     tags: req.body.tags || [],
     keywords: req.body.keywords || [],
     date: req.body.date || Date.now(),
@@ -106,7 +286,50 @@ router.get('/download/preview', (req, res) => {
   }
 });
 
-// delete a webpage, this is, delete it from the database then delete the local folder containing it
+
+/**
+ * @swagger
+ * /download/delete/{docName}:
+ *  delete:
+ *    summary: Delete a webpage by name
+ *    description: >
+ *      Delete a webpage from the database, then delete the local folder containing it.\n
+ *      This uses the webpage's docName field in the database to find it.
+ *    tags: [Download]
+ *    parameters:
+ *      - in: path
+ *        name: docName
+ *        schema:
+ *          type: string
+ *        required: true
+ *        description: The webpage's docName saved in the database
+ *    responses: 
+ *      200:
+ *        description: The webpage was deleted successfully
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: array
+ *                  items:
+ *                    type: string
+ *                  description: Message from the back-end about the deletion results
+ *      500:
+ *        description: There was a server error while deleting the webpage
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string   
+ *                  description: A simple description of the error, look at the server console for details.
+ *      
+ *      
+ *      
+ */
 router.delete('/download/delete/:docName', async (req, res) => {
   try {
     const deleteLog = await DocumentDownloader.delete(req.params.docName);

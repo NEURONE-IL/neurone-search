@@ -2,7 +2,7 @@
 import fs from 'fs';
 import { URL } from 'url'; // updated to use the WHATWG API
 import path from 'path';
-import iconv from 'iconv';
+import iconv from 'iconv-lite';
 import charset from 'charset';
 import sha from 'sha';
 import { load } from 'cheerio';
@@ -199,10 +199,8 @@ export default class DocumentParser {
         return htmlString;
       }
       else {
-        const ic = new iconv.Iconv(encoding, 'UTF-8//TRANSLIT//IGNORE'),
-              buf = ic.convert(htmlBuffer),
-              str = buf.toString('utf-8');
-
+        // iconv replaced with iconv-lite
+        const str = iconv.decode(htmlBuffer, 'utf-8');
         return str;
       }
     }
